@@ -1,0 +1,414 @@
+<!doctype html><html lang="en"><head>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta charset="utf-8">
+<title>Fiber-on-Fiber Overlap</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+  :root {
+    --bg: #f7fafb;
+    --surface: #ffffff;
+    --ink: #182b33;
+    --ink-2: #4c626c;
+    --muted: #74868f;
+    --line: #dfe8eb;
+    --accent: #0f4c5c;
+    --seg0: #e3edf0;
+    --seg0-edge: #c9d9de;
+    --seg0-ink: #4c626c;
+    --seg1: #4e93a5;
+    --seg2: #0f4c5c;
+    --seg-ink: #ffffff;
+    --note-bg: #eef5f7;
+    --tooltip-bg: #16242b;
+    --tooltip-ink: #eef5f7;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #10161a;
+      --surface: #151d22;
+      --ink: #e5eef2;
+      --ink-2: #a4b6be;
+      --muted: #78909a;
+      --line: #26343b;
+      --accent: #7cc1d2;
+      --seg0: #22333b;
+      --seg0-edge: #33474f;
+      --seg0-ink: #a4b6be;
+      --seg1: #3f8496;
+      --seg2: #a8d4de;
+      --seg-ink: #ffffff;
+      --note-bg: #1a262d;
+      --tooltip-bg: #e5eef2;
+      --tooltip-ink: #16242b;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #10161a;
+    --surface: #151d22;
+    --ink: #e5eef2;
+    --ink-2: #a4b6be;
+    --muted: #78909a;
+    --line: #26343b;
+    --accent: #7cc1d2;
+    --seg0: #22333b;
+    --seg0-edge: #33474f;
+    --seg0-ink: #a4b6be;
+    --seg1: #3f8496;
+    --seg2: #a8d4de;
+    --seg-ink: #ffffff;
+    --note-bg: #1a262d;
+    --tooltip-bg: #e5eef2;
+    --tooltip-ink: #16242b;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+    font-size: 16px;
+    line-height: 1.55;
+  }
+  .wrap { max-width: 1020px; margin: 0 auto; padding: 48px 28px 72px; }
+  .eyebrow {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 12.5px; letter-spacing: 0.09em; text-transform: uppercase;
+    color: var(--accent); font-weight: 600; margin: 0 0 10px;
+  }
+  h1 {
+    font-size: clamp(30px, 4.5vw, 42px); font-weight: 700;
+    letter-spacing: -0.015em; line-height: 1.12; margin: 0 0 14px;
+    text-wrap: balance;
+  }
+  h2 {
+    font-size: 21px; font-weight: 600; letter-spacing: -0.01em;
+    margin: 56px 0 6px; text-wrap: balance;
+  }
+  .sub { color: var(--ink-2); max-width: 68ch; margin: 0; }
+  .lede { color: var(--ink-2); max-width: 72ch; margin: 14px 0 0; }
+  .lede strong, .note strong { color: var(--ink); font-weight: 600; }
+  .sectionsub { color: var(--muted); font-size: 14px; margin: 0 0 22px; max-width: 72ch; }
+
+  .legend { display: flex; flex-wrap: wrap; gap: 18px; margin: 30px 0 14px; }
+  .legend .chip { display: flex; align-items: center; gap: 8px; font-size: 13.5px; color: var(--ink-2); }
+  .legend .sw { width: 14px; height: 14px; border-radius: 4px; }
+  .sw0 { background: var(--seg0); border: 1px solid var(--seg0-edge); }
+  .sw1 { background: var(--seg1); }
+  .sw2 { background: var(--seg2); }
+
+  .chart { display: flex; flex-direction: column; gap: 9px; }
+  .row { display: grid; grid-template-columns: 172px 1fr 62px; gap: 14px; align-items: center; }
+  .row .name { text-align: right; line-height: 1.25; }
+  .row .name .n { font-size: 14.5px; font-weight: 600; }
+  .row .name .p { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 11.5px; color: var(--muted); }
+  .bar { display: flex; height: 30px; gap: 2px; }
+  .seg { position: relative; border-radius: 3px; min-width: 2px; display: flex; align-items: center; justify-content: center; cursor: default; }
+  .seg:first-child { border-top-left-radius: 6px; border-bottom-left-radius: 6px; }
+  .seg:last-child { border-top-right-radius: 6px; border-bottom-right-radius: 6px; }
+  .s0 { background: var(--seg0); box-shadow: inset 0 0 0 1px var(--seg0-edge); }
+  .s1 { background: var(--seg1); }
+  .s2 { background: var(--seg2); }
+  .seg .lab {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 11.5px; font-weight: 500; pointer-events: none; white-space: nowrap;
+  }
+  .s0 .lab { color: var(--seg0-ink); }
+  .s1 .lab, .s2 .lab { color: var(--seg-ink); }
+  :root[data-theme="dark"] .s2 .lab { color: #10161a; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .s2 .lab { color: #10161a; }
+  }
+  .row .any {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 13.5px; font-weight: 600; color: var(--accent);
+    text-align: right; font-variant-numeric: tabular-nums;
+  }
+  .axisnote { font-size: 12.5px; color: var(--muted); margin-top: 12px;
+    font-family: "IBM Plex Mono", ui-monospace, monospace; }
+
+  #tip {
+    position: fixed; z-index: 10; pointer-events: none; display: none;
+    background: var(--tooltip-bg); color: var(--tooltip-ink);
+    border-radius: 8px; padding: 9px 12px; font-size: 12.5px; line-height: 1.5;
+    box-shadow: 0 6px 24px rgba(0,0,0,0.25); max-width: 260px;
+  }
+  #tip .t { font-weight: 600; }
+  #tip .m { font-family: "IBM Plex Mono", ui-monospace, monospace; }
+
+  .tablewrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+  table { border-collapse: collapse; width: 100%; min-width: 780px; font-size: 14px; }
+  th, td { padding: 9px 14px; text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  th:first-child, td:first-child { text-align: left; }
+  thead th {
+    font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 11px;
+    text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted);
+    font-weight: 600; border-bottom: 1px solid var(--line);
+  }
+  tbody td { border-bottom: 1px solid var(--line); }
+  tbody tr:last-child td { border-bottom: none; }
+  td.num { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 13px; }
+  td.pct-any { font-weight: 600; color: var(--accent); }
+
+  .note {
+    background: var(--note-bg); border-left: 3px solid var(--accent);
+    border-radius: 0 10px 10px 0; padding: 16px 20px; margin: 26px 0 0;
+    font-size: 14.5px; color: var(--ink-2); max-width: 76ch;
+  }
+
+  .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; }
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; }
+  .card h3 { margin: 0 0 8px; font-size: 14.5px; font-weight: 600; }
+  .card .ol { display: flex; justify-content: space-between; gap: 12px; font-size: 13.5px; color: var(--ink-2); padding: 3px 0; }
+  .card .ol .v { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12.5px; color: var(--ink); }
+
+  .method { max-width: 76ch; }
+  .method li { margin: 0 0 10px; color: var(--ink-2); font-size: 14.5px; }
+  .method li strong { color: var(--ink); font-weight: 600; }
+
+  footer { margin-top: 60px; padding-top: 18px; border-top: 1px solid var(--line);
+    font-size: 12.5px; color: var(--muted);
+    font-family: "IBM Plex Mono", ui-monospace, monospace; }
+  @media (max-width: 640px) {
+    .row { grid-template-columns: 1fr; gap: 4px; }
+    .row .name { text-align: left; display: flex; gap: 8px; align-items: baseline; }
+    .row .any { text-align: left; }
+    .chart { gap: 16px; }
+  }
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <p class="eyebrow">FCC BDC · December 31, 2025 · passings (BSL) basis</p>
+  <h1>Fiber-on-Fiber Overlap</h1>
+  <p class="sub">Share of each provider's fiber passings that are also covered by another
+  fiber provider — split by whether 0, 1, or 2+ other fiber networks report service
+  at the same location.</p>
+  <p class="lede"><strong>Google Fiber is the most overbuilt fiber footprint in the country
+  (64% overlapped)</strong> — a consequence of building where AT&amp;T already is. Brightspeed
+  (48%) is the most-overlapped incumbent telco. At the other end, the big ILECs defend
+  mostly exclusive footprints: AT&amp;T and Frontier are ~78% sole-fiber, Verizon 81%,
+  Ziply 85%, and altafiber's Cincinnati footprint is 91% exclusive — the least
+  overbuilt of the fourteen.</p>
+
+  <h2>Overlap distribution</h2>
+  <p class="sectionsub">Each bar is 100% of that provider's residential-capable fiber
+  passings, Dec 31 2025. Hover any segment for counts.</p>
+  <div class="legend">
+    <div class="chip"><span class="sw sw0"></span>0 other fiber providers</div>
+    <div class="chip"><span class="sw sw1"></span>1 other</div>
+    <div class="chip"><span class="sw sw2"></span>2 or more</div>
+  </div>
+  <div class="chart" id="chart"></div>
+  <p class="axisnote">right column = % of passings with any fiber overlap</p>
+
+  <h2>The numbers</h2>
+  <p class="sectionsub">Distinct broadband-serviceable locations (BSLs) where the provider
+  reports FTTP (technology 50), residential-capable records only. Sorted by overlapped share.</p>
+  <div class="tablewrap">
+    <table id="tbl">
+      <thead><tr>
+        <th>Provider</th><th>Fiber passings</th>
+        <th>0 overlap</th><th>1 overlap</th><th>2+ overlap</th>
+        <th>% 0</th><th>% 1</th><th>% 2+</th><th>% any</th>
+      </tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <div class="note"><strong>Why business-only filings are excluded.</strong> Altice's
+  Lightpath unit files fiber availability at 5.4M locations across the Northeast and
+  mid-Atlantic — 100% of them business-only records. Counting those as "fiber overlap"
+  would nearly double Verizon's overlapped share (18.7% → 39.1%) without a single
+  competing residential fiber passing. This analysis therefore counts only records coded
+  residential or both (R/X), on both sides of every comparison. Altice's real Optimum
+  FTTH overbuild still shows up — it is Verizon's #1 overlapper at 1.6M shared passings.</div>
+
+  <h2>Who is doing the overlapping</h2>
+  <p class="sectionsub">Top three other fiber providers on each subject's footprint, by shared passings.</p>
+  <div class="cards" id="cards"></div>
+
+  <h2>The acquired cohort</h2>
+  <p class="sectionsub">Fiber providers of 100k+ passings whose control changed hands
+  between September 2022 and August 2026 (announced or closed) and that are not among
+  the fourteen above. Same basis and color coding; footprints measured at Dec 31 2025
+  regardless of deal status.</p>
+  <div class="legend">
+    <div class="chip"><span class="sw sw0"></span>0 other fiber providers</div>
+    <div class="chip"><span class="sw sw1"></span>1 other</div>
+    <div class="chip"><span class="sw sw2"></span>2 or more</div>
+  </div>
+  <div class="chart" id="acqchart"></div>
+  <p class="axisnote">right column = % of passings with any fiber overlap</p>
+  <div class="tablewrap" style="margin-top: 26px">
+    <table id="acqtbl">
+      <thead><tr>
+        <th>Provider</th><th>Acquirer</th><th>Status</th><th>Fiber passings</th>
+        <th>% 0</th><th>% 1</th><th>% 2+</th><th>% any</th>
+      </tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+  <div class="note"><strong>The M&amp;A market has been buying overbuilders.</strong>
+  The fourteen incumbents above mostly sit at 15–35% overlap; the acquired cohort clusters
+  at 40–70% — GoNetspeed (70%), IdeaTek (67%), Tachus (64%). The utility-like exceptions:
+  Gateway Fiber (10.5%) and i3 Broadband (32%). Not shown: cable-hybrid acquirees (Cox →
+  Charter, WOW! → DigitalBridge/Crestview), whose footprints are mostly HFC; Vexus, whose
+  Metronet deal closed June 2022, outside the four-year window; and US Internet (→ Metronet,
+  Sep 2025, ~101k passings), already absorbed into Metronet's filing ID by Dec 2025. Targets
+  on the main list — Frontier → Verizon, Quantum Fiber → AT&amp;T, Metronet → T-Mobile/KKR,
+  Ziply → BCE, Consolidated → Searchlight, Windstream ↔ Uniti, Google Fiber → Stonepeak/Astound
+  (pending) — appear in their own rows above.</div>
+
+  <h2>Method</h2>
+  <ul class="method">
+    <li><strong>Source:</strong> FCC Broadband Data Collection fixed availability,
+    as-of 12/31/2025 (July 2026 public release), technology code 50 (fiber to the
+    premises), all 50 states + DC — 71.3M fiber-passed BSLs, 1,570 fiber filers.</li>
+    <li><strong>Passings basis:</strong> distinct broadband-serviceable locations.
+    A multi-unit building counts as one BSL, so MDU-heavy footprints (Hotwire,
+    Verizon, Blue Stream) show fewer BSLs than their marketed unit passings.</li>
+    <li><strong>Overlap:</strong> another distinct filing provider (any of the 1,570,
+    not just these fourteen) reporting technology 50 at the same location_id in the
+    same vintage. Keyed by provider_id, never brand.</li>
+    <li><strong>Entity notes:</strong> Windstream = all Kinetic subsidiaries plus
+    Uniti entities (one filing ID). Metronet includes Vexus. Lumen = Quantum Fiber +
+    CenturyLink brands. altafiber excludes sister company Hawaiian Telcom
+    (254k BSLs, same filing ID). Consolidated = Fidium's filing entity only.</li>
+    <li><strong>Acquired cohort:</strong> screened to targets with 100k+ residential-capable
+    fiber BSLs at Dec 2025; deal window Sept 2022 – Aug 2026 by announce or close date;
+    majority-control changes only. Lumos = provider ID 130403 filtered to Lumos-branded
+    records (the same ID also files T-Mobile Fiber). Empire Access = its filing entity
+    (Empire Long Distance), which includes sister brands. Pending deals (the three T-Mobile
+    JVs) are marked in the table.</li>
+    <li><strong>Caveats:</strong> availability is provider-reported and can overstate
+    marketable footprint. On open-access networks (e.g. UTOPIA in Utah) each retail
+    ISP counts as a separate overlapper, which inflates 2+ counts in those areas.</li>
+  </ul>
+
+  <footer>fcc bdc 2025-12-31 · tech 50 · residential-capable (R/X) · analysis 2026-08-31 ·
+  companion csvs: fiber14_overlap_summary · _by_state · _top_overlappers</footer>
+</div>
+<div id="tip"></div>
+
+<script>
+const DATA = [
+  ["Google Fiber","1.9M passings",678239,1017869,190151,36.0,54.0,10.1,64.0,1886259],
+  ["Brightspeed","1.8M passings",934842,806072,52572,52.1,44.9,2.9,47.9,1793486],
+  ["Blue Stream Fiber","57k passings",33711,23126,481,58.8,40.3,0.8,41.2,57318],
+  ["Metronet","2.6M passings",1581092,943417,88177,60.5,36.1,3.4,39.5,2612686],
+  ["Hotwire","144k passings",90583,48526,4689,63.0,33.7,3.3,37.0,143798],
+  ["Consolidated (Fidium)","1.0M passings",672018,323575,38186,65.0,31.3,3.7,35.0,1033779],
+  ["Windstream (Kinetic)","1.4M passings",948096,451663,43863,65.7,31.3,3.0,34.3,1443622],
+  ["Lumen (Quantum)","3.2M passings",2277150,713929,166655,72.1,22.6,5.3,27.9,3157734],
+  ["AT&T","19.4M passings",15191222,3827500,356650,78.4,19.8,1.8,21.6,19375372],
+  ["Frontier","6.5M passings",5138778,1210412,196766,78.5,18.5,3.0,21.5,6545956],
+  ["ALLO","437k passings",353149,78786,4685,80.9,18.0,1.1,19.1,436620],
+  ["Verizon","9.4M passings",7616013,1732921,15319,81.3,18.5,0.2,18.7,9364253],
+  ["Ziply Fiber","764k passings",647000,87073,29856,84.7,11.4,3.9,15.3,763929],
+  ["altafiber","699k passings",639513,59328,652,91.4,8.5,0.1,8.6,699493],
+];
+const TOPS = {
+  "Google Fiber":[["AT&T","806,674"],["Everfast Fiber","260,034"],["Quantum Fiber","158,553"]],
+  "Brightspeed":[["Metronet","105,045"],["Lumos","46,724"],["AT&T","43,305"]],
+  "Blue Stream Fiber":[["Home Town Cable","8,732"],["Quantum Fiber","4,809"],["AT&T","4,009"]],
+  "Metronet":[["AT&T","431,441"],["Frontier","115,586"],["Brightspeed","105,045"]],
+  "Hotwire":[["AT&T","37,050"],["Frontier","4,501"],["Spectrum","4,317"]],
+  "Consolidated (Fidium)":[["Ezee Fiber","85,733"],["GoNetspeed","83,173"],["AT&T","50,087"]],
+  "Windstream (Kinetic)":[["Metronet","58,102"],["ALLO","36,290"],["Ezee Fiber","28,186"]],
+  "Lumen (Quantum)":[["Google Fiber","158,553"],["Cox","135,671"],["Metronet","91,776"]],
+  "AT&T":[["Google Fiber","806,674"],["Metronet","431,441"],["Spectrum","289,799"]],
+  "Frontier":[["GoNetspeed","273,718"],["Optimum (Altice)","174,085"],["Metronet","115,586"]],
+  "ALLO":[["Windstream (Kinetic)","36,290"],["Quantum Fiber","21,440"],["Great Plains Bband","7,652"]],
+  "Verizon":[["Optimum (Altice)","1,609,491"],["Xfinity","31,779"],["Greenlight Networks","18,647"]],
+  "Ziply Fiber":[["TDS Telecom","29,991"],["Chelan County PUD","23,369"],["Native Network","22,248"]],
+  "altafiber":[["AT&T","32,479"],["Point Broadband","8,579"],["Spectrum","6,545"]],
+};
+// acquired cohort (100k+ passings, deal Sep 2022 - Aug 2026, not on the list
+// above, cable-hybrids excluded): name, sub, c0, c1, c2, p0, p1, p2, pAny,
+// total, acquirer, status
+const ACQ = [
+  ["GoNetspeed","534k · T-Mobile/Oak Hill JV",158124,325939,50134,29.6,61.0,9.4,70.4,534197,"T-Mobile / Oak Hill JV","pending (ann. Apr 2026)"],
+  ["IdeaTek","150k · Oak Hill/Pamlico",49854,91234,8568,33.3,61.0,5.7,66.7,149656,"Oak Hill / Pamlico","closed May 2025"],
+  ["Tachus","179k · Ezee Fiber",64569,97870,16439,36.1,54.7,9.2,63.9,178878,"Ezee Fiber","closed Sep 2025"],
+  ["Socket Telecom","105k · Oak Hill/Pamlico",53410,47549,3624,51.1,45.5,3.5,48.9,104583,"Oak Hill / Pamlico","closed May 2025"],
+  ["Greenlight Networks","287k · T-Mobile/Oak Hill JV",158378,120982,7513,55.2,42.2,2.6,44.8,286873,"T-Mobile / Oak Hill JV","pending (ann. Apr 2026)"],
+  ["Clearwave Fiber","170k · GTCR + Berkshire",95533,64936,9895,56.1,38.1,5.8,43.9,170364,"merged w/ Point Broadband (GTCR + Berkshire)","closed May 2026"],
+  ["Empire Access","161k · Antin",90645,52766,17602,56.3,32.8,10.9,43.7,161013,"Antin Infrastructure","closed Jan 2023"],
+  ["Lumos","564k · T-Mobile/EQT JV",327968,220544,15053,58.2,39.1,2.7,41.8,563565,"T-Mobile / EQT JV","closed Apr 2025"],
+  ["Point Broadband","348k · GTCR + Berkshire",205224,122330,20606,58.9,35.1,5.9,41.1,348160,"merged w/ Clearwave (GTCR + Berkshire)","closed May 2026"],
+  ["i3 Broadband","297k · T-Mobile/Wren House JV",201355,93356,2527,67.7,31.4,0.9,32.3,297238,"T-Mobile / Wren House JV","pending (ann. Apr 2026)"],
+  ["Gateway Fiber","134k · CBRE IM",119976,13938,191,89.5,10.4,0.1,10.5,134105,"CBRE Investment Management","closed Q1 2023"],
+];
+const fmt = n => n.toLocaleString("en-US");
+const SEGNAMES = ["0 other fiber providers","1 other fiber provider","2+ other fiber providers"];
+
+const tip = document.getElementById("tip");
+function buildChart(el, data) {
+  data.forEach(d => {
+    const [name, sub, c0, c1, c2, p0, p1, p2, pAny] = d;
+    const row = document.createElement("div");
+    row.className = "row";
+    const counts = [c0, c1, c2], pcts = [p0, p1, p2];
+    let segs = "";
+    for (let i = 0; i < 3; i++) {
+      const lab = pcts[i] >= 7 ? `<span class="lab">${pcts[i].toFixed(1)}%</span>` : "";
+      segs += `<div class="seg s${i}" style="flex:${pcts[i]} 0 0" data-p="${name}" data-i="${i}" data-c="${counts[i]}" data-pc="${pcts[i]}">${lab}</div>`;
+    }
+    row.innerHTML =
+      `<div class="name"><div class="n">${name}</div><div class="p">${sub}</div></div>` +
+      `<div class="bar">${segs}</div>` +
+      `<div class="any">${pAny.toFixed(1)}%</div>`;
+    el.appendChild(row);
+  });
+  el.addEventListener("mousemove", e => {
+    const seg = e.target.closest(".seg");
+    if (!seg) { tip.style.display = "none"; return; }
+    tip.innerHTML = `<div class="t">${seg.dataset.p}</div>` +
+      `${SEGNAMES[seg.dataset.i]}<br>` +
+      `<span class="m">${fmt(+seg.dataset.c)} passings · ${(+seg.dataset.pc).toFixed(1)}%</span>`;
+    tip.style.display = "block";
+    const x = Math.min(e.clientX + 14, window.innerWidth - 280);
+    tip.style.left = x + "px";
+    tip.style.top = (e.clientY + 16) + "px";
+  });
+  el.addEventListener("mouseleave", () => { tip.style.display = "none"; });
+}
+buildChart(document.getElementById("chart"), DATA);
+buildChart(document.getElementById("acqchart"), ACQ);
+
+const acqBody = document.querySelector("#acqtbl tbody");
+ACQ.forEach(d => {
+  const [name, , , , , p0, p1, p2, pAny, total, acquirer, status] = d;
+  const tr = document.createElement("tr");
+  tr.innerHTML = `<td>${name}</td><td>${acquirer}</td><td>${status}</td>` +
+    `<td class="num">${fmt(total)}</td>` +
+    `<td class="num">${p0.toFixed(1)}%</td><td class="num">${p1.toFixed(1)}%</td>` +
+    `<td class="num">${p2.toFixed(1)}%</td><td class="num pct-any">${pAny.toFixed(1)}%</td>`;
+  acqBody.appendChild(tr);
+});
+
+const tbody = document.querySelector("#tbl tbody");
+DATA.forEach(d => {
+  const [name, , c0, c1, c2, p0, p1, p2, pAny, total] = d;
+  const tr = document.createElement("tr");
+  tr.innerHTML = `<td>${name}</td><td class="num">${fmt(total)}</td>` +
+    `<td class="num">${fmt(c0)}</td><td class="num">${fmt(c1)}</td><td class="num">${fmt(c2)}</td>` +
+    `<td class="num">${p0.toFixed(1)}%</td><td class="num">${p1.toFixed(1)}%</td>` +
+    `<td class="num">${p2.toFixed(1)}%</td><td class="num pct-any">${pAny.toFixed(1)}%</td>`;
+  tbody.appendChild(tr);
+});
+
+const cards = document.getElementById("cards");
+DATA.forEach(d => {
+  const name = d[0];
+  const card = document.createElement("div");
+  card.className = "card";
+  card.innerHTML = `<h3>${name}</h3>` + TOPS[name].map(t =>
+    `<div class="ol"><span>${t[0]}</span><span class="v">${t[1]}</span></div>`).join("");
+  cards.appendChild(card);
+});
+</script>
+
+</body></html>
