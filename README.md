@@ -21,3 +21,6 @@ workflow live in [`monitor/`](monitor/).
 
 The penetration benchmark's normalized CSVs, metric dictionary, validation
 tests, and dashboard builder live in [`fiber_penetration/`](fiber_penetration/).
+Its Shentel panel follows discrete launch-quarter cohorts at observed 3-month
+intervals from 0 through 36 months across 15 successive investor decks. The
+headline 0/3/6/9/12-month curve is a balanced panel of the same 11 cohorts.
