@@ -1,0 +1,74 @@
+name: Metronet / Lumos monitor
+
+on:
+  schedule:
+    - cron: "23 11 * * 1-5"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  issues: write
+
+concurrency:
+  group: metronet-lumos-monitor
+  cancel-in-progress: false
+
+jobs:
+  monitor:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Run monitor tests
+        run: python -m unittest discover -s monitor/tests -v
+
+      - name: Collect signals and rebuild dashboard
+        run: python monitor/run_monitor.py collect --alerts-output "$RUNNER_TEMP/metronet-lumos-alerts.json"
+
+      - name: Prepare alert digest
+        id: alerts
+        shell: bash
+        run: |
+          count=$(python -c 'import json, os; print(len(json.load(open(os.environ["RUNNER_TEMP"] + "/metronet-lumos-alerts.json"))["alerts"]))')
+          echo "count=$count" >> "$GITHUB_OUTPUT"
+          if [ "$count" -gt 0 ]; then
+            python monitor/run_monitor.py format-alerts \
+              --input "$RUNNER_TEMP/metronet-lumos-alerts.json" \
+              --output "$RUNNER_TEMP/metronet-lumos-alerts.md"
+          fi
+
+      - name: Open Brightspeed encroachment issue
+        if: steps.alerts.outputs.count != '0'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ALERT_COUNT: ${{ steps.alerts.outputs.count }}
+        run: |
+          gh issue create \
+            --title "Metronet/Lumos: ${ALERT_COUNT} new Brightspeed encroachment signal(s)" \
+            --body-file "$RUNNER_TEMP/metronet-lumos-alerts.md"
+
+      - name: Commit monitor updates
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add \
+            monitor/data/brightspeed_counties.json \
+            monitor/data/collected_evidence.json \
+            monitor/data/source_state.json \
+            docs/metronet_lumos_monitor.html
+          if git diff --cached --quiet; then
+            echo "No monitor changes"
+            exit 0
+          fi
+          git commit -m "Update Metronet/Lumos monitor"
+          git pull --rebase origin main
+          git push origin HEAD:main
+

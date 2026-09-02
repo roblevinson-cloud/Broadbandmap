@@ -1,0 +1,202 @@
+{
+  "schema_version": 1,
+  "minimum_event_date": "2026-01-01",
+  "brightspeed_footprint_url": "https://www.brightspeed.com/aboutus/",
+  "providers": {
+    "Metronet": {
+      "aliases": [
+        "metronet",
+        "metro net",
+        "built by metronet",
+        "vexus fiber",
+        "vexus fiber llc"
+      ]
+    },
+    "Lumos": {
+      "aliases": [
+        "lumos fiber",
+        "lumosfiber.com",
+        "lumos networks"
+      ]
+    }
+  },
+  "build_terms": [
+    "construction",
+    "constructing",
+    "installation",
+    "installing",
+    "expansion",
+    "expands",
+    "buildout",
+    "build-out",
+    "building fiber",
+    "right of way",
+    "right-of-way",
+    "row permit",
+    "permit",
+    "franchise",
+    "master license",
+    "engineering",
+    "make-ready",
+    "pole attachment",
+    "homes passed",
+    "households passed",
+    "addresses",
+    "service available",
+    "coming soon"
+  ],
+  "stage_weights": {
+    "announced": 0.35,
+    "engineering": 0.60,
+    "row_approved": 0.80,
+    "permitted": 0.90,
+    "construction": 0.95,
+    "available": 1.00,
+    "blocked": 0.20
+  },
+  "feed_sources": [
+    {
+      "id": "lumos-press-releases",
+      "name": "Lumos press-release feed",
+      "url": "https://www.lumosfiber.com/blog/category/press-releases/feed/",
+      "provider_hint": "Lumos",
+      "source_type": "provider"
+    },
+    {
+      "id": "bing-metronet-web",
+      "name": "Bing web — Metronet construction",
+      "url": "https://www.bing.com/search?format=rss&q=%22Metronet%22+fiber+%28construction+OR+permit+OR+expansion+OR+%22right-of-way%22%29",
+      "provider_hint": "Metronet",
+      "source_type": "search"
+    },
+    {
+      "id": "bing-lumos-web",
+      "name": "Bing web — Lumos construction",
+      "url": "https://www.bing.com/search?format=rss&q=%22Lumos+Fiber%22+%28construction+OR+permit+OR+expansion+OR+%22right-of-way%22%29",
+      "provider_hint": "Lumos",
+      "source_type": "search"
+    },
+    {
+      "id": "google-metronet-news",
+      "name": "Google News — Metronet construction",
+      "url": "https://news.google.com/rss/search?hl=en-US&gl=US&ceid=US%3Aen&q=%22Metronet%22+fiber+construction+OR+permit+OR+expansion",
+      "provider_hint": "Metronet",
+      "source_type": "search"
+    },
+    {
+      "id": "google-lumos-news",
+      "name": "Google News — Lumos construction",
+      "url": "https://news.google.com/rss/search?hl=en-US&gl=US&ceid=US%3Aen&q=%22Lumos+Fiber%22+construction+OR+permit+OR+expansion",
+      "provider_hint": "Lumos",
+      "source_type": "search"
+    }
+  ],
+  "sitemap_sources": [
+    {
+      "id": "metronet-blog-sitemap",
+      "name": "Metronet newsroom sitemap",
+      "url": "https://www.metronet.com/sitemaps-1-section-blog-1-sitemap.xml",
+      "provider_hint": "Metronet",
+      "source_type": "provider"
+    }
+  ],
+  "watched_pages": [
+    {
+      "id": "metronet-construction-hub",
+      "name": "Metronet construction hub",
+      "url": "https://www.metronet.com/construction",
+      "provider_hint": "Metronet",
+      "source_type": "provider"
+    },
+    {
+      "id": "new-bern-metronet-schedule",
+      "name": "New Bern board video — Metronet schedule",
+      "url": "https://newbernnc.new.swagit.com/videos/393480",
+      "provider_hint": "Metronet",
+      "source_type": "municipal"
+    },
+    {
+      "id": "elm-grove-metronet",
+      "name": "Elm Grove Metronet project",
+      "url": "https://www.elmgrovewi.org/CivicAlerts.aspx?AID=1169",
+      "provider_hint": "Metronet",
+      "source_type": "municipal"
+    },
+    {
+      "id": "grand-blanc-metronet",
+      "name": "Grand Blanc Metronet notice",
+      "url": "https://www.cityofgrandblancmi.gov/news_detail_T34_R288.php",
+      "provider_hint": "Metronet",
+      "source_type": "municipal"
+    },
+    {
+      "id": "benson-lumos",
+      "name": "Benson Lumos construction map",
+      "url": "https://townofbenson.com/m/newsflash/Home/Detail/705",
+      "provider_hint": "Lumos",
+      "source_type": "municipal"
+    },
+    {
+      "id": "howland-lumos",
+      "name": "Howland fiber safety update",
+      "url": "https://www.howlandoh.gov/fiber-optic-safety-initiative-update/",
+      "provider_hint": "Lumos",
+      "source_type": "municipal"
+    },
+    {
+      "id": "new-franklin-lumos",
+      "name": "New Franklin Lumos notice",
+      "url": "https://www.newfranklin.org/CivicAlerts.aspx?AID=1016",
+      "provider_hint": "Lumos",
+      "source_type": "municipal"
+    },
+    {
+      "id": "lumos-ohio-permitting",
+      "name": "Lumos Ohio permitting petition",
+      "url": "https://www.lumosfiber.com/blog/2026/07/13/why-lumos-filed-an-fcc-petition-to-protect-competition-in-ohio/",
+      "provider_hint": "Lumos",
+      "source_type": "provider"
+    },
+    {
+      "id": "orange-county-lumos-arpa",
+      "name": "Orange County Lumos ARPA project",
+      "url": "https://orangecountync.gov/2924/LumosARPA-Broadband-Project",
+      "provider_hint": "Lumos",
+      "source_type": "municipal"
+    }
+  ],
+  "market_crosswalk": [
+    {"city": "New Bern", "state": "NC", "counties": ["Craven"]},
+    {"city": "Elm Grove", "state": "WI", "counties": ["Waukesha"]},
+    {"city": "Grand Blanc", "state": "MI", "counties": ["Genesee"]},
+    {"city": "Benson", "state": "NC", "counties": ["Johnston"]},
+    {"city": "Howland", "state": "OH", "counties": ["Trumbull"]},
+    {"city": "New Franklin", "state": "OH", "counties": ["Summit"]},
+    {"city": "Roselle", "state": "IL", "counties": ["Cook", "DuPage"]},
+    {"city": "Tyler", "state": "TX", "counties": ["Smith"]},
+    {"city": "Alexandria", "state": "IN", "counties": ["Madison"]},
+    {"city": "Elwood", "state": "IN", "counties": ["Madison"]},
+    {"city": "Kent", "state": "OH", "counties": ["Portage"]},
+    {"city": "Killeen", "state": "TX", "counties": ["Bell"]},
+    {"city": "Greenville", "state": "NC", "counties": ["Pitt"]},
+    {"city": "Jacksonville", "state": "NC", "counties": ["Onslow"]},
+    {"city": "Warren", "state": "OH", "counties": ["Trumbull"]},
+    {"city": "Niles", "state": "OH", "counties": ["Trumbull"]},
+    {"city": "Columbus", "state": "OH", "counties": ["Franklin"]},
+    {"city": "Lorain", "state": "OH", "counties": ["Lorain"]},
+    {"city": "Elyria", "state": "OH", "counties": ["Lorain"]},
+    {"city": "Youngstown", "state": "OH", "counties": ["Mahoning"]},
+    {"city": "Durham", "state": "NC", "counties": ["Durham"]},
+    {"city": "Raleigh", "state": "NC", "counties": ["Wake"]},
+    {"city": "Wilmington", "state": "NC", "counties": ["New Hanover"]}
+  ],
+  "ignored_domains": [
+    "facebook.com",
+    "instagram.com",
+    "linkedin.com",
+    "reddit.com",
+    "tiktok.com",
+    "x.com",
+    "youtube.com"
+  ]
+}

@@ -10,5 +10,9 @@ Site: https://roblevinson-cloud.github.io/Broadbandmap/
 - 48 state explorers (census tract / block group)
 - 40 metro hex maps (H3 res-8)
 - Buckeye Broadband Toledo deep-dive (block level)
+- Metronet/Lumos forward construction monitor matched to Brightspeed counties
 
 All pages are self-contained static HTML in `docs/`.
+
+The monitor's standard-library collector, evidence ledger, tests, and scheduled
+workflow live in [`monitor/`](monitor/).

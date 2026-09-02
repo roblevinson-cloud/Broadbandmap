@@ -1,0 +1,37 @@
+{
+  "as_of": "2025-12-31",
+  "basis": "FCC BDC fiber-on-fiber location overlap against Brightspeed FTTP locations",
+  "caveat": "Counts are gross provider overlaps. A Brightspeed location served by both providers appears in both provider totals.",
+  "brightspeed_by_state": {
+    "AL": {"fiber_locations": 107188, "any_fiber_overbuilt": 66579},
+    "AR": {"fiber_locations": 71704, "any_fiber_overbuilt": 36637},
+    "GA": {"fiber_locations": 15320, "any_fiber_overbuilt": 11221},
+    "IL": {"fiber_locations": 19863, "any_fiber_overbuilt": 18893},
+    "IN": {"fiber_locations": 77992, "any_fiber_overbuilt": 53296},
+    "KS": {"fiber_locations": 25844, "any_fiber_overbuilt": 21236},
+    "LA": {"fiber_locations": 26980, "any_fiber_overbuilt": 11147},
+    "MI": {"fiber_locations": 9043, "any_fiber_overbuilt": 795},
+    "MS": {"fiber_locations": 3649, "any_fiber_overbuilt": 3631},
+    "MO": {"fiber_locations": 177735, "any_fiber_overbuilt": 140376},
+    "NC": {"fiber_locations": 463301, "any_fiber_overbuilt": 209012},
+    "NJ": {"fiber_locations": 39793, "any_fiber_overbuilt": 22940},
+    "OH": {"fiber_locations": 218323, "any_fiber_overbuilt": 77676},
+    "OK": {"fiber_locations": 23, "any_fiber_overbuilt": 0},
+    "PA": {"fiber_locations": 117252, "any_fiber_overbuilt": 44024},
+    "SC": {"fiber_locations": 30036, "any_fiber_overbuilt": 15908},
+    "TN": {"fiber_locations": 113330, "any_fiber_overbuilt": 56698},
+    "TX": {"fiber_locations": 145408, "any_fiber_overbuilt": 95105},
+    "VA": {"fiber_locations": 77718, "any_fiber_overbuilt": 32361},
+    "WI": {"fiber_locations": 52984, "any_fiber_overbuilt": 21377}
+  },
+  "provider_overlap": {
+    "Metronet": {
+      "total": 105045,
+      "states": {"IN": 8718, "NC": 76229, "TX": 12369, "WI": 7729}
+    },
+    "Lumos": {
+      "total": 48844,
+      "states": {"NC": 32352, "OH": 16365, "VA": 127}
+    }
+  }
+}
