@@ -1,0 +1,12 @@
+field,file,definition,unit,nullable,comparison_note
+provider_id,all,Stable network-level identifier,text,No,"Join key; may differ from public parent"
+period_end,aggregate_observations.csv,Reporting period end,ISO date,No,Use for aggregate time series only
+reported_passings,aggregate_observations.csv,Locations or premises disclosed as passed by fiber,locations,Yes,"May exceed the denominator if total consumer and business passings are reported"
+aligned_denominator,aggregate_observations.csv,Saleable locations aligned to the reported customer numerator,locations,Yes,"Preferred denominator for recalculation"
+reported_connections,aggregate_observations.csv,Fiber customers or connections in the stated scope,connections,Yes,"Scope is retained in customer_scope"
+reported_penetration,aggregate_observations.csv,Penetration stated by the issuer,decimal,Yes,"Preferred for presentation when company inputs are rounded"
+calculated_penetration,aggregate_observations.csv,Connections divided by aligned denominator,decimal,Yes,"Audit field; blank when the issuer omits the denominator"
+months_since_launch,cohort_observations.csv,Age of the build cohort when measured,months,No,"Best horizontal axis for true penetration curves"
+cohort_passings,cohort_observations.csv,Passings in the stated vintage,locations,Yes,"Frontier vintages are cumulative; Shentel vintages are discrete"
+quality_grade,observations,Comparability grade from A through D,text,No,"A is aligned and recurring; B has caveats; C is sparse; D is unusable"
+source_id,observations,Foreign key to the source ledger,text,No,"Every observation must resolve to a primary company source"

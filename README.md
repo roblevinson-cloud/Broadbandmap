@@ -11,8 +11,13 @@ Site: https://roblevinson-cloud.github.io/Broadbandmap/
 - 40 metro hex maps (H3 res-8)
 - Buckeye Broadband Toledo deep-dive (block level)
 - Metronet/Lumos forward construction monitor matched to Brightspeed counties
+- Residential fiber penetration benchmarks: public-company universe, aggregate
+  histories, build-vintage curves, and primary-source ledger
 
 All pages are self-contained static HTML in `docs/`.
 
 The monitor's standard-library collector, evidence ledger, tests, and scheduled
 workflow live in [`monitor/`](monitor/).
+
+The penetration benchmark's normalized CSVs, metric dictionary, validation
+tests, and dashboard builder live in [`fiber_penetration/`](fiber_penetration/).
