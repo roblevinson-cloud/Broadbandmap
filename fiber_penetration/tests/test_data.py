@@ -16,7 +16,9 @@ class FiberPenetrationDataTests(unittest.TestCase):
         data = dashboard.validate_data()
         self.assertGreaterEqual(len(data["universe"]), 25)
         self.assertGreaterEqual(len(data["aggregate"]), 50)
-        self.assertGreaterEqual(len(data["cohorts"]), 30)
+        self.assertGreaterEqual(len(data["cohorts"]), 220)
+        self.assertEqual(len(data["shentel_panel"]), 195)
+        self.assertEqual(len(data["shentel_summary"]), 27)
 
     def test_every_loaded_provider_is_classified(self):
         data = dashboard.validate_data()
@@ -33,6 +35,9 @@ class FiberPenetrationDataTests(unittest.TestCase):
                 page = output.read_text(encoding="utf-8")
                 self.assertIn("Aggregate network penetration", page)
                 self.assertIn("cohort_observations.csv", page)
+                self.assertIn("Exact Shentel cohort matrix", page)
+                self.assertIn("shentel_cohort_panel.csv", page)
+                self.assertIn("Balanced 12m average (11 cohorts)", page)
                 self.assertIn("<svg", page)
         finally:
             dashboard.OUTPUT = original
@@ -42,6 +47,38 @@ class FiberPenetrationDataTests(unittest.TestCase):
             with path.open(encoding="utf-8-sig", newline="") as handle:
                 headers = next(csv.reader(handle))
             self.assertEqual(len(headers), len(set(headers)), path.name)
+
+    def test_shentel_q4_2022_cohort_has_observed_quarter_steps(self):
+        panel = dashboard.validate_data()["shentel_panel"]
+        curve = {
+            int(row["months_since_launch"]): float(row["reported_penetration"])
+            for row in panel
+            if row["cohort_launch_period"] == "2022-Q4"
+        }
+        self.assertEqual(
+            {month: curve[month] for month in (0, 3, 6, 9, 12)},
+            {0: 0.040, 3: 0.132, 6: 0.140, 9: 0.178, 12: 0.185},
+        )
+
+    def test_shentel_12_month_curve_uses_a_balanced_cohort_set(self):
+        summary = dashboard.validate_data()["shentel_summary"]
+        rows = [row for row in summary if row["panel"] == "balanced_12m"]
+        self.assertEqual({int(row["cohort_count"]) for row in rows}, {11})
+        self.assertEqual(
+            {
+                int(row["months_since_launch"]): round(
+                    float(row["passing_weighted_penetration"]), 6
+                )
+                for row in rows
+            },
+            {
+                0: 0.047199,
+                3: 0.105540,
+                6: 0.122295,
+                9: 0.139145,
+                12: 0.152714,
+            },
+        )
 
 
 if __name__ == "__main__":
