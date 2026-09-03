@@ -49,9 +49,12 @@ def validate_data() -> dict[str, list[dict[str, str]]]:
     universe = read_csv("company_universe.csv")
     sources = read_csv("sources.csv")
     aggregate = read_csv("aggregate_observations.csv")
+    kinetic_snapshots = read_csv("kinetic_quarterly_cohort_snapshots.csv")
+    kinetic_curves = read_csv("kinetic_quarterly_cohort_curves.csv")
+    kinetic_annual = read_csv("kinetic_annual_cohort_snapshots.csv")
     shentel_panel = read_csv("shentel_cohort_panel.csv")
     shentel_summary = read_csv("shentel_cohort_summary.csv")
-    cohorts = read_csv("cohort_observations.csv") + shentel_panel
+    cohorts = read_csv("cohort_observations.csv") + kinetic_curves + shentel_panel
 
     provider_ids = [row["provider_id"] for row in universe]
     source_ids = [row["source_id"] for row in sources]
@@ -111,6 +114,70 @@ def validate_data() -> dict[str, list[dict[str, str]]]:
         if expected_months < 0 or expected_months > 36 or expected_months % 3:
             raise ValueError(f'{row["observation_id"]}: Shentel panel must use 0-36 month quarter steps')
 
+    snapshot_keys: set[tuple[str, str, int]] = set()
+    for row in kinetic_snapshots:
+        oid = row["observation_id"]
+        if oid in seen:
+            raise ValueError(f"duplicate observation_id: {oid}")
+        seen.add(oid)
+        if row["provider_id"] != "kinetic" or row["source_id"] not in source_map:
+            raise ValueError(f"{oid}: invalid Kinetic source/provider")
+        date.fromisoformat(row["report_as_of"])
+        date.fromisoformat(row["measurement_as_of"])
+        age = int(row["months_since_launch"])
+        if age not in {3, 6, 9, 12, 24}:
+            raise ValueError(f"{oid}: unexpected Kinetic quarterly cohort age")
+        penetration = float(row["reported_penetration"])
+        if not 0 <= penetration <= 1:
+            raise ValueError(f"{oid}: penetration outside [0, 1]")
+        key = (row["report_period"], row["cohort_launch_period"], age)
+        if key in snapshot_keys:
+            raise ValueError(f"duplicate Kinetic report/cohort/age key: {key}")
+        snapshot_keys.add(key)
+        launch_year, launch_quarter = row["cohort_launch_period"].split("-Q")
+        report = date.fromisoformat(row["report_as_of"])
+        report_index = report.year * 4 + (report.month - 1) // 3
+        launch_index = int(launch_year) * 4 + int(launch_quarter) - 1
+        if row["measurement_basis"] == "current_at_report":
+            if (report_index - launch_index) * 3 != age:
+                raise ValueError(f"{oid}: early-age cohort does not match report quarter")
+        elif row["measurement_basis"] != "anniversary_milestone":
+            raise ValueError(f"{oid}: invalid measurement basis")
+
+    curve_map = {
+        (row["cohort_launch_period"], int(row["months_since_launch"])): row
+        for row in kinetic_curves
+    }
+    for key, curve in curve_map.items():
+        snapshots = [
+            row
+            for row in kinetic_snapshots
+            if (row["cohort_launch_period"], int(row["months_since_launch"])) == key
+        ]
+        if not snapshots or {row["reported_penetration"] for row in snapshots} != {curve["reported_penetration"]}:
+            raise ValueError(f"Kinetic curve point {key} does not reconcile to snapshots")
+        if int(curve["times_disclosed"]) != len(snapshots):
+            raise ValueError(f"Kinetic curve point {key} has wrong disclosure count")
+
+    annual_keys: set[tuple[str, str, int]] = set()
+    for row in kinetic_annual:
+        oid = row["observation_id"]
+        if oid in seen:
+            raise ValueError(f"duplicate observation_id: {oid}")
+        seen.add(oid)
+        if row["provider_id"] != "kinetic" or row["source_id"] not in source_map:
+            raise ValueError(f"{oid}: invalid Kinetic annual source/provider")
+        date.fromisoformat(row["report_as_of"])
+        age = int(row["months_since_launch"])
+        if age not in {12, 24, 36}:
+            raise ValueError(f"{oid}: unexpected Kinetic annual cohort age")
+        if not 0 <= float(row["reported_penetration"]) <= 1:
+            raise ValueError(f"{oid}: penetration outside [0, 1]")
+        key = (row["report_period"], row["cohort_launch_period"], age)
+        if key in annual_keys:
+            raise ValueError(f"duplicate Kinetic annual report/cohort/age key: {key}")
+        annual_keys.add(key)
+
     expected_panels = {
         "balanced_12m": ("2022-Q4", "2025-Q2", 12),
         "balanced_24m": ("2022-Q4", "2024-Q2", 24),
@@ -159,6 +226,9 @@ def validate_data() -> dict[str, list[dict[str, str]]]:
         "sources": sources,
         "aggregate": aggregate,
         "cohorts": cohorts,
+        "kinetic_snapshots": kinetic_snapshots,
+        "kinetic_curves": kinetic_curves,
+        "kinetic_annual": kinetic_annual,
         "shentel_panel": shentel_panel,
         "shentel_summary": shentel_summary,
     }
@@ -286,6 +356,8 @@ def cohort_chart(
                 for row in shentel_summary
                 if row["panel"] == "balanced_12m"
             ]
+        elif pid == "kinetic":
+            avg = []
         else:
             avg = []
             for months, values in sorted(buckets.items()):
@@ -296,6 +368,82 @@ def cohort_chart(
             out.append(f'<path class="cohort-line" stroke="{color}" d="M ' + " L ".join(f"{xx:.1f} {yy:.1f}" for xx, yy in avg) + '"/>')
     out.append("</svg>")
     return "".join(out)
+
+
+def kinetic_vintage_chart(rows: list[dict[str, str]]) -> str:
+    width, height = 960, 420
+    left, right, top, bottom = 62, 22, 22, 50
+    plot_w, plot_h = width - left - right, height - top - bottom
+    y_max = 0.40
+    year_colors = {2020: "#64748b", 2021: "#2563eb", 2022: "#7c3aed", 2023: "#e11d48", 2024: "#d97706", 2025: "#0f766e"}
+
+    def x(months: int) -> float:
+        return left + months / 24 * plot_w
+
+    def y(penetration: float) -> float:
+        return top + (y_max - penetration) / y_max * plot_h
+
+    out = [f'<svg class="chart" viewBox="0 0 {width} {height}" role="img" aria-label="Kinetic discrete launch-quarter cohort penetration">']
+    for pct in (0.10, 0.20, 0.30, 0.40):
+        yy = y(pct)
+        out.append(f'<line class="grid" x1="{left}" x2="{width-right}" y1="{yy:.1f}" y2="{yy:.1f}"/><text class="axis" x="{left-10}" y="{yy+4:.1f}" text-anchor="end">{pct:.0%}</text>')
+    for month in (3, 6, 9, 12, 24):
+        xx = x(month)
+        out.append(f'<line class="tick" x1="{xx:.1f}" x2="{xx:.1f}" y1="{top}" y2="{height-bottom}"/><text class="axis" x="{xx:.1f}" y="{height-18}" text-anchor="middle">{month}m</text>')
+
+    vintages: dict[str, list[dict[str, str]]] = defaultdict(list)
+    for row in rows:
+        vintages[row["cohort_launch_period"]].append(row)
+    for vintage, points in sorted(vintages.items()):
+        points.sort(key=lambda row: int(row["months_since_launch"]))
+        color = year_colors[int(vintage[:4])]
+        for first, second in zip(points, points[1:]):
+            x1, y1 = x(int(first["months_since_launch"])), y(float(first["reported_penetration"]))
+            x2, y2 = x(int(second["months_since_launch"])), y(float(second["reported_penetration"]))
+            css_class = "kinetic-segment" if int(second["months_since_launch"]) - int(first["months_since_launch"]) == 3 else "kinetic-gap"
+            out.append(f'<path class="{css_class}" stroke="{color}" d="M {x1:.1f} {y1:.1f} L {x2:.1f} {y2:.1f}"/>')
+        for row in points:
+            xx, yy = x(int(row["months_since_launch"])), y(float(row["reported_penetration"]))
+            title = f'{row["cohort_label"]} · {row["months_since_launch"]}m: {float(row["reported_penetration"]):.1%}'
+            out.append(f'<circle cx="{xx:.1f}" cy="{yy:.1f}" r="4" fill="{color}"><title>{esc(title)}</title></circle>')
+    out.append(f'<text class="axis axis-title" x="{left + plot_w / 2:.1f}" y="{height-2}" text-anchor="middle">Months since launch quarter</text>')
+    out.append("</svg>")
+    return "".join(out)
+
+
+def kinetic_matrix(rows: list[dict[str, str]]) -> str:
+    ages = (3, 6, 9, 12, 24)
+    pivot: dict[str, dict[int, dict[str, str]]] = defaultdict(dict)
+    for row in rows:
+        pivot[row["cohort_launch_period"]][int(row["months_since_launch"])] = row
+    body = []
+    for vintage in sorted(pivot, reverse=True):
+        cells = []
+        for age in ages:
+            row = pivot[vintage].get(age)
+            if row is None:
+                cells.append('<td class="empty">—</td>')
+                continue
+            penetration = float(row["reported_penetration"])
+            alpha = 0.09 + penetration / 0.40 * 0.43
+            cells.append(f'<td class="heat num" style="background:rgba(124,58,237,{alpha:.2f})"><strong>{penetration:.0%}</strong></td>')
+        body.append(f'<tr><th scope="row">{esc(vintage)}</th>' + "".join(cells) + "</tr>")
+    headers = "".join(f"<th>{age}m</th>" for age in ages)
+    return f'<table class="matrix kinetic-matrix"><thead><tr><th>Launch cohort</th>{headers}</tr></thead><tbody>{"".join(body)}</tbody></table>'
+
+
+def kinetic_annual_table(rows: list[dict[str, str]]) -> str:
+    pivot: dict[tuple[str, str], dict[int, dict[str, str]]] = defaultdict(dict)
+    for row in rows:
+        pivot[(row["report_period"], row["cohort_launch_period"])][int(row["months_since_launch"])] = row
+    body = []
+    for report_period, cohort in sorted(pivot, reverse=True):
+        cells = []
+        for age in (12, 24, 36):
+            row = pivot[(report_period, cohort)].get(age)
+            cells.append('<td class="empty">—</td>' if row is None else f'<td class="num"><strong>{float(row["reported_penetration"]):.0%}</strong></td>')
+        body.append(f'<tr><td>{esc(report_period)}</td><th scope="row">{esc(cohort)}</th>{"".join(cells)}</tr>')
+    return '<table><thead><tr><th>Report</th><th>Launch year</th><th>12m</th><th>24m</th><th>36m</th></tr></thead><tbody>' + "".join(body) + "</tbody></table>"
 
 
 def shentel_vintage_chart(
@@ -398,6 +546,9 @@ def build_dashboard(data: dict[str, list[dict[str, str]]] | None = None) -> Path
     universe = data["universe"]
     aggregate = data["aggregate"]
     cohorts = data["cohorts"]
+    kinetic_snapshots = data["kinetic_snapshots"]
+    kinetic_curves = data["kinetic_curves"]
+    kinetic_annual = data["kinetic_annual"]
     shentel_panel = data["shentel_panel"]
     shentel_summary = data["shentel_summary"]
     sources = data["sources"]
@@ -437,6 +588,14 @@ def build_dashboard(data: dict[str, list[dict[str, str]]] | None = None) -> Path
 
     aggregate_legend = legend([(names[p], COLORS[p]) for p in ("frontier", "att", "kinetic", "optimum", "shentel_glo", "altafiber", "hawaiian_telcom")])
     cohort_legend = legend([(names[p], COLORS[p]) for p in ("frontier", "kinetic", "shentel_glo")])
+    kinetic_year_legend = legend([
+        ("2020 launches", "#64748b"),
+        ("2021 launches", "#2563eb"),
+        ("2022 launches", "#7c3aed"),
+        ("2023 launches", "#e11d48"),
+        ("2024 launches", "#d97706"),
+        ("2025 launches", "#0f766e"),
+    ])
     shentel_year_legend = legend([
         ("2022 launches", "#9ca3af"),
         ("2023 launches", "#2563eb"),
@@ -460,7 +619,7 @@ def build_dashboard(data: dict[str, list[dict[str, str]]] | None = None) -> Path
 .wrap{max-width:1180px;margin:auto;padding:28px 22px 70px}.hero{padding:28px 30px;border-radius:20px;background:linear-gradient(120deg,#0f172a,#173b61);color:white;box-shadow:0 18px 45px #1725541a}
 h1{font-size:clamp(28px,5vw,48px);line-height:1.04;letter-spacing:-.035em;margin:0 0 12px;max-width:19ch}.hero p{max-width:78ch;color:#d6e1ef;margin:0}.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:22px}.kpi{background:#ffffff10;border:1px solid #ffffff25;border-radius:13px;padding:12px 14px}.kpi b{display:block;font-size:23px}.kpi span{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:#bfd0e5}
 nav{display:flex;gap:10px;flex-wrap:wrap;margin:18px 0}nav a,.download{border:1px solid var(--line);background:white;border-radius:999px;padding:7px 12px;text-decoration:none;color:var(--accent);font-weight:700}
-h2{font-size:22px;letter-spacing:-.02em;margin:34px 0 5px}.sub{color:var(--soft);margin:0 0 14px;max-width:90ch}.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;box-shadow:0 5px 20px #1725540b}.chart{width:100%;height:auto;min-width:760px}.chart-wrap{overflow-x:auto}.grid{stroke:#dce3ec;stroke-width:1}.tick{stroke:#eef1f5;stroke-width:1}.axis{fill:#697386;font-size:12px}.axis-title{font-weight:700}.series{fill:none;stroke-width:3}.cohort-line{fill:none;stroke-width:4;stroke-linecap:round;stroke-linejoin:round}.vintage-line{fill:none;stroke-width:1.7;opacity:.58}.average-line{fill:none;stroke:#111827;stroke-width:5;stroke-linecap:round;stroke-linejoin:round}.raw{opacity:.48;stroke:white;stroke-width:1}.legends{display:flex;gap:13px;flex-wrap:wrap;margin:4px 0 8px}.legend{font-size:12px;color:var(--soft);display:inline-flex;align-items:center;gap:5px}.legend i{width:9px;height:9px;border-radius:50%}
+h2{font-size:22px;letter-spacing:-.02em;margin:34px 0 5px}.sub{color:var(--soft);margin:0 0 14px;max-width:90ch}.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;box-shadow:0 5px 20px #1725540b}.chart{width:100%;height:auto;min-width:760px}.chart-wrap{overflow-x:auto}.grid{stroke:#dce3ec;stroke-width:1}.tick{stroke:#eef1f5;stroke-width:1}.axis{fill:#697386;font-size:12px}.axis-title{font-weight:700}.series{fill:none;stroke-width:3}.cohort-line{fill:none;stroke-width:4;stroke-linecap:round;stroke-linejoin:round}.vintage-line{fill:none;stroke-width:1.7;opacity:.58}.kinetic-segment{fill:none;stroke-width:3;opacity:.78}.kinetic-gap{fill:none;stroke-width:2;stroke-dasharray:7 7;opacity:.42}.average-line{fill:none;stroke:#111827;stroke-width:5;stroke-linecap:round;stroke-linejoin:round}.raw{opacity:.48;stroke:white;stroke-width:1}.legends{display:flex;gap:13px;flex-wrap:wrap;margin:4px 0 8px}.legend{font-size:12px;color:var(--soft);display:inline-flex;align-items:center;gap:5px}.legend i{width:9px;height:9px;border-radius:50%}
 .callout{border-left:4px solid #f59e0b;background:#fffbeb;padding:13px 16px;border-radius:8px;margin:16px 0;color:#713f12}.age-kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin:14px 0}.age-kpis div{background:white;border:1px solid var(--line);border-radius:12px;padding:11px 13px}.age-kpis b{display:block;font-size:21px;color:#065f46}.age-kpis span{color:var(--soft);font-size:10.5px;text-transform:uppercase;letter-spacing:.06em}.table-wrap{overflow:auto}.table-wrap table{min-width:900px}table{width:100%;border-collapse:collapse}th{text-align:left;color:var(--soft);font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;background:#f8fafc}th,td{padding:10px 9px;border-bottom:1px solid var(--line);vertical-align:top}td{font-size:12.5px}.num{font-variant-numeric:tabular-nums}.note{display:block;color:var(--soft);font-size:10.5px;margin-top:2px}.grade{display:inline-grid;place-items:center;width:25px;height:25px;border-radius:50%;font-weight:800}.grade-a{background:#d1fae5;color:#065f46}.grade-b{background:#dbeafe;color:#1e40af}.grade-c{background:#fef3c7;color:#92400e}.grade-d{background:#fee2e2;color:#991b1b}
 .matrix th,.matrix td{text-align:center;white-space:nowrap}.matrix th:first-child,.matrix td:first-child{text-align:left}.matrix .heat{border-left:2px solid white}.matrix .empty{color:#98a2b3}.average-row th,.average-cell{background:#111827!important;color:white}.downloads{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0 0}.method{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.method div{background:white;border:1px solid var(--line);border-radius:13px;padding:14px}.method b{display:block;margin-bottom:3px}.foot{color:var(--soft);font-size:11px;margin-top:30px}@media(max-width:760px){.kpis{grid-template-columns:repeat(2,1fr)}.age-kpis{grid-template-columns:repeat(2,1fr)}.method{grid-template-columns:1fr}.hero{padding:22px}.wrap{padding:18px 12px 50px}}
 """
@@ -472,13 +631,14 @@ document.querySelector('#universeSearch').addEventListener('input', e => {
 """
     page = f"""<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Residential Fiber Penetration Benchmarks</title><style>{css}</style></head><body><main class="wrap">
 <section class="hero"><h1>Residential fiber penetration benchmarks</h1><p>Issuer-reported passings, connections and build-vintage take-up curves, normalized without erasing the definition differences that make broadband comparisons difficult.</p><div class="kpis"><div class="kpi"><b>{len(universe)}</b><span>providers classified</span></div><div class="kpi"><b>{len(aggregate)}</b><span>aggregate observations</span></div><div class="kpi"><b>{len(cohorts)}</b><span>cohort observations</span></div><div class="kpi"><b>{len(sources)}</b><span>primary sources</span></div></div></section>
-<nav><a href="index.html">← Explorer home</a><a href="#shentel">Shentel cohorts</a><a href="#cohorts">Peer cohorts</a><a href="#aggregate">Aggregate curves</a><a href="#universe">Coverage universe</a><a href="#sources">Sources</a></nav>
+<nav><a href="index.html">← Explorer home</a><a href="#kinetic">Kinetic cohorts</a><a href="#shentel">Shentel cohorts</a><a href="#cohorts">Peer cohorts</a><a href="#aggregate">Aggregate curves</a><a href="#universe">Coverage universe</a><a href="#sources">Sources</a></nav>
+<section id="kinetic"><h2>Kinetic: discrete quarterly launch cohorts</h2><p class="sub">The raw panel contains {len(kinetic_snapshots)} chart observations from five quarterly presentations. After removing exact repeats, {len(kinetic_curves)} distinct cohort-age points remain across 2Q20–1Q25 launches. Solid segments join consecutive three-month observations; dashed segments span disclosed endpoints with missing intervening quarters. Blank cells are not estimated.</p><div class="age-kpis"><div><b>20%</b><span>4Q23 · 3 months</span></div><div><b>24%</b><span>4Q23 · 6 months</span></div><div><b>26%</b><span>4Q23 · 9 months</span></div><div><b>35%</b><span>2025 annual cohort · 12m latest</span></div><div><b>40%+</b><span>company target</span></div></div><div class="card"><div class="legends">{kinetic_year_legend}</div><div class="chart-wrap">{kinetic_vintage_chart(kinetic_curves)}</div></div><div class="callout"><strong>No defensible Kinetic balanced 3/6/9/12 curve.</strong> The 4Q23 cohort is observable at 3, 6 and 9 months, but Kinetic switched to annual launch-year roll-ups before disclosing its discrete 12-month point. The company also omits cohort passings, so the data cannot be passing-weighted. The dashboard leaves those gaps open.</div><h2>Exact Kinetic quarterly cohort matrix</h2><p class="sub">These are discrete launch-quarter cohorts. The strongest continuous early paths are 3Q23 at 23% / 25% / 26% at 6 / 9 / 12 months and 4Q23 at 20% / 24% / 26% at 3 / 6 / 9 months.</p><div class="card table-wrap">{kinetic_matrix(kinetic_curves)}</div><h2>Kinetic annual roll-up restatements</h2><p class="sub">Beginning in 4Q24, Kinetic summarized qualifying quarterly subcohorts by launch year. Because each report includes all subcohorts that had reached a milestone by that date, the same launch-year value can change as the sample expands. Treat each row as a report-date snapshot, not a fixed vintage curve.</p><div class="card table-wrap">{kinetic_annual_table(kinetic_annual)}</div></section>
 <section id="shentel"><h2>Shentel Glo Fiber: launch-quarter cohorts</h2><p class="sub">Each colored line follows one launch-quarter cohort through successive investor decks. The panel contains {len(shentel_panel)} directly observed report-quarter × cohort values at 0, 3, 6, …, 36 months; no values are interpolated.</p><div class="age-kpis">{age_kpis}</div><div class="card"><div class="legends">{shentel_year_legend}</div><div class="chart-wrap">{shentel_vintage_chart(shentel_panel, shentel_summary)}</div></div><div class="callout"><strong>Balanced-cohort method.</strong> The headline 0–12 month curve uses the same 11 launch cohorts (Q4 2022 through Q2 2025) at every age. A cohort shown in its launch-quarter deck is age 0; the same launch quarter in successive decks is age 3, 6, 9, then 12 months. Longer balanced samples contain seven cohorts through 24 months and three through 36 months.</div><h2>Exact Shentel cohort matrix</h2><p class="sub">Rows are launch quarters; columns are months since launch. Newer cohorts remain blank where the required future deck does not yet exist. The final row uses the same 11 cohorts in every displayed 0–12 month cell.</p><div class="card table-wrap">{shentel_matrix(shentel_panel, shentel_summary)}</div></section>
-<section id="cohorts"><h2>Standardized cohort comparison</h2><p class="sub">Passing-weighted observations by months since launch. Shentel's line is the balanced 11-cohort 0–12 month curve; Frontier uses cumulative within-year vintages and Kinetic uses launch-year cohorts, so the underlying dots and definitions remain available.</p><div class="card"><div class="legends">{cohort_legend}</div><div class="chart-wrap">{cohort_chart(cohorts, names, shentel_summary)}</div></div></section>
+<section id="cohorts"><h2>Standardized cohort comparison</h2><p class="sub">Issuer-reported observations by months since launch. Shentel's line is the passing-weighted balanced 11-cohort 0–12 month curve; Frontier uses cumulative within-year vintages. Kinetic appears as raw quarterly-cohort points only because it does not disclose cohort passings and its age samples are not balanced.</p><div class="card"><div class="legends">{cohort_legend}</div><div class="chart-wrap">{cohort_chart(cohorts, names, shentel_summary)}</div></div></section>
 <section id="aggregate"><h2>Aggregate network penetration</h2><p class="sub">Reported fiber connections divided by the issuer's aligned saleable-location denominator. These lines are operating histories, not controlled cohort comparisons.</p><div class="card"><div class="legends">{aggregate_legend}</div><div class="chart-wrap">{aggregate_chart(aggregate, names)}</div></div><div class="callout"><strong>Read aggregate declines carefully.</strong> Frontier's reported penetration fell as it rapidly added fresh passings, even while fiber customers grew. Build-vintage curves above isolate maturation better.</div></section>
 <section><h2>Latest disclosed aggregate snapshot</h2><p class="sub">Latest loaded observation per network. “Passings” may be blank where only customers and reported penetration were disclosed.</p><div class="card table-wrap"><table><thead><tr><th>Network</th><th>Period</th><th>Passings</th><th>Connections</th><th>Penetration</th><th>Numerator</th><th>Audit trail</th></tr></thead><tbody>{''.join(latest_rows)}</tbody></table></div></section>
 <section id="universe"><h2>Provider disclosure universe</h2><p class="sub">The investable and formerly-public universe, plus private targets and international comparables. Grade A is the strongest disclosure; grade D means no defensible public curve.</p><input id="universeSearch" aria-label="Search providers" placeholder="Search company, ticker, status or note…" style="width:100%;max-width:430px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;margin-bottom:10px"><div class="card table-wrap"><table><thead><tr><th>Network / parent</th><th>Ticker</th><th>Grade</th><th>Aggregate</th><th>Cohort</th><th>Status</th><th>Type</th><th>Assessment</th></tr></thead><tbody>{''.join(universe_rows)}</tbody></table></div></section>
-<section><h2>Reusable data</h2><p class="sub">Analysis-ready CSVs keep issuer-reported values, cohort ages, passings, definitions and source lineage.</p><div class="method"><div><b>Use balanced age buckets</b>Shentel's 3/6/9/12-month values come from successive decks for the same 11 cohorts, not a fitted or changing-sample curve.</div><div><b>Separate retail from wholesale</b>Chorus and Openreach take-up is network utilization, not one ISP's retail share.</div><div><b>Flag migrations and transactions</b>Optimum's HFC migrations and ownership changes at Frontier, Lumen, CNSL and Ziply create structural breaks.</div></div><div class="downloads"><a class="download" href="https://github.com/roblevinson-cloud/Broadbandmap/blob/main/fiber_penetration/data/shentel_cohort_panel.csv">Shentel cohort panel CSV</a><a class="download" href="https://github.com/roblevinson-cloud/Broadbandmap/blob/main/fiber_penetration/data/shentel_cohort_summary.csv">Shentel balanced curves CSV</a><a class="download" href="https://github.com/roblevinson-cloud/Broadbandmap/blob/main/fiber_penetration/data/company_universe.csv">Company universe CSV</a><a class="download" href="https://github.com/roblevinson-cloud/Broadbandmap/blob/main/fiber_penetration/data/aggregate_observations.csv">Aggregate observations CSV</a><a class="download" href="https://github.com/roblevinson-cloud/Broadbandmap/blob/main/fiber_penetration/data/cohort_observations.csv">Other cohort observations CSV</a><a class="download" href="https://github.com/roblevinson-cloud/Broadbandmap/blob/main/fiber_penetration/data/sources.csv">Source ledger CSV</a><a class="download" href="https://github.com/roblevinson-cloud/Broadbandmap/blob/main/fiber_penetration/data/metric_dictionary.csv">Metric dictionary CSV</a></div></section>
+<section><h2>Reusable data</h2><p class="sub">Analysis-ready CSVs keep issuer-reported values, cohort ages, passings, definitions and source lineage.</p><div class="method"><div><b>Use balanced age buckets</b>Shentel's 3/6/9/12-month values come from successive decks for the same 11 cohorts, not a fitted or changing-sample curve.</div><div><b>Preserve disclosure geometry</b>Kinetic quarterly cohorts and annual roll-ups stay separate; missing cohort ages remain blank.</div><div><b>Flag migrations and transactions</b>Optimum's HFC migrations and ownership changes at Frontier, Lumen, CNSL and Ziply create structural breaks.</div></div><div class="downloads"><a class="download" href="https://github.com/roblevinson-cloud/Broadbandmap/blob/main/fiber_penetration/data/kinetic_quarterly_cohort_snapshots.csv">Kinetic raw quarterly snapshots CSV</a><a class="download" href="https://github.com/roblevinson-cloud/Broadbandmap/blob/main/fiber_penetration/data/kinetic_quarterly_cohort_curves.csv">Kinetic deduplicated curves CSV</a><a class="download" href="https://github.com/roblevinson-cloud/Broadbandmap/blob/main/fiber_penetration/data/kinetic_annual_cohort_snapshots.csv">Kinetic annual roll-ups CSV</a><a class="download" href="https://github.com/roblevinson-cloud/Broadbandmap/blob/main/fiber_penetration/data/shentel_cohort_panel.csv">Shentel cohort panel CSV</a><a class="download" href="https://github.com/roblevinson-cloud/Broadbandmap/blob/main/fiber_penetration/data/shentel_cohort_summary.csv">Shentel balanced curves CSV</a><a class="download" href="https://github.com/roblevinson-cloud/Broadbandmap/blob/main/fiber_penetration/data/company_universe.csv">Company universe CSV</a><a class="download" href="https://github.com/roblevinson-cloud/Broadbandmap/blob/main/fiber_penetration/data/aggregate_observations.csv">Aggregate observations CSV</a><a class="download" href="https://github.com/roblevinson-cloud/Broadbandmap/blob/main/fiber_penetration/data/cohort_observations.csv">Other cohort observations CSV</a><a class="download" href="https://github.com/roblevinson-cloud/Broadbandmap/blob/main/fiber_penetration/data/sources.csv">Source ledger CSV</a><a class="download" href="https://github.com/roblevinson-cloud/Broadbandmap/blob/main/fiber_penetration/data/metric_dictionary.csv">Metric dictionary CSV</a></div></section>
 <section id="sources"><h2>Primary-source ledger</h2><p class="sub">Every loaded observation resolves to a company workbook, release or presentation.</p><div class="card table-wrap"><table><thead><tr><th>Network</th><th>Published</th><th>Document</th></tr></thead><tbody>{''.join(source_rows)}</tbody></table></div></section>
 <p class="foot">Built from public company disclosures. These definitions are not GAAP measures and are not fully standardized across issuers. Generated by <code>fiber_penetration/build_dashboard.py</code>.</p></main><script>{script}</script></body></html>"""
     OUTPUT.write_text(page, encoding="utf-8")
