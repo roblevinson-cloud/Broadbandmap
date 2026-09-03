@@ -19,6 +19,7 @@
     "bing-metronet-web": {
       "kind": "feed",
       "seen": [
+        "https://broadbandnow.com/Metronet",
         "https://metroconet.com/",
         "https://metroconet.com/check-availability",
         "https://metroconet.com/city/des-moines",
@@ -35,7 +36,9 @@
       "kind": "feed",
       "seen": [
         "https://en.m.wikipedia.org/wiki/Lumos_Networks",
+        "https://lumos.edu/",
         "https://lumos.edu/login",
+        "https://lumoslumos.com/products/lumos-knitting-light-main?variant=42998694510840",
         "https://ridelumos.com/",
         "https://stackoverflow.com/questions/155436/unit-test-naming-best-practices",
         "https://stackoverflow.com/questions/7208070/googletest-how-to-skip-a-test",
@@ -176,6 +179,7 @@
         "https://news.google.com/rss/articles/CBMipgJBVV95cUxQOGs1WTZyXzAyNW52YlFQNFRoVjZaSW1OTVhoTU1lNGZfMVdpRk1BcGtpaXNOdVN2TXVNWkRpQjc0WDhzSG9tUFlUc09ZWDYtVE9mVHV3ZGluaU83RVNoaHhrSUZaMDJHN2lXc1FESWR5QVFpc0UwdkxnUk54bi1aTkVEeC1IMXA5U2FNTi1OcWZ5OFlvcGh6bGFNLVhzdlA1UmZhWlNSY292X3pOUUVadDZhaE9nUm1rMzRnVXhEMndpYWp5UGFOOUc1dW16cy01TU15Vm9TUXVuOG56SGpjLVpZQng3OXF1QjBxRGlVUlU0dC0za1lEMW00OW5uUnZPeGl5QVR5a3ZtdXJYY0MwNVd3N2c2aU9ob1JiUjNxQ1RPdFp0MFE?oc=5",
         "https://news.google.com/rss/articles/CBMiqAFBVV95cUxOalYwRFRrOUk2akRFOWNnZTd4WVJFbVhXOG8tSU5aVDVMb2FGQWV3WUxpM21USUFRNkp2ZXdHSEdvdl9HdHVVVkpvOHpFUGJZV1h4M0ZtUzNZdEpzLVh2RGFCdmtyRlpLeHhvZy1YMHVJUl9GMHpCU09TQktFaWdubFMwWW9PMjhsM0x3VVhvOUJYbmQyT1dlcktOMnNYU0pmSVZNcFNVdF8?oc=5",
         "https://news.google.com/rss/articles/CBMiswFBVV95cUxNQmlJYTRKRkRybjhKdTk4V0J4NHB3UWQ3S0J2eHZpNUU5cHFYNGpHbFpLemFKMnpqT2ZtdkNMMjJObUpNajBKR1J6cHBqNEJPeUhKUUtLU25zd3lPWUxvNk82THVmNVZqVnJiRFVON3BMNmE2eDFXN1paUl81YnhaLURwSjhJaHphSUpDVk5xek9ENEN1ZHl4QlNtdlpUSDZRT0tjR3RISnM2dEhQZ1lST19PSQ?oc=5",
+        "https://news.google.com/rss/articles/CBMitgFBVV95cUxPTlFrNUZFUDhadFFMX3diTm5qUnFKV3lQVGgzMVRTc3o4U2NWZDRiMmYtWFhJMDl2NF9QSlF1Z3YwRGpNbUpvNmkxa25zNmd1bVhsMzAxVjdJZTBLc3hTRmxkSjBmMnJLenlfVTJoN1JRQjVTU0U3YW5KQkdHTTlvdmZLTlBha3lwYUloVGYtazZ0Z0w5cUxsNnFpY0MxN2hkRkNJWXprNDRtalRaRnZsM2tOdDhEUQ?oc=5",
         "https://news.google.com/rss/articles/CBMiuAFBVV95cUxOTzZqWHNRQTJ4UVlGcWFxb2wwMDVSdVpQNFNrYTlSZUEyV1lOX2JlRVk4M3E0Q1JHbG84TkNENjl0V3J2UktmQ0xuUGtsT0owN1pXLU4wS25HMWdjLUNVT1BMOU1uNnQ2cnktYUVzdkFBc1ptNlNKMko0ZTNhbElmZnNDemNyVW1mVWgtR0V0ZHdpak9SZnM2eGkxMFE2ZG9ua3ppSnRIU1VCUm5xRE5rU0V6bEdacEpR?oc=5",
         "https://news.google.com/rss/articles/CBMiwwFBVV95cUxOYkJKWFJMM3lkWXpaMnhSRXZUb3ZQMzdXRk14UVNKN3RzdDd1eDZzTHhoV2lfSlFrZThzTDFLTmNjOGZ2OFBsand3NXBEdVNSZDNYWlRyV2pZUHNaMVRDQjRFNndkWVlVRXhNeEFZWDRkZ05vQTVuQlNUQmZpelhJWDVUeUQ3VFZjZnVsVkkwbnJPeVQ4OVZFRll5amZPYjdRVzU0ckFMNWdnX3FmM3RiYThwWVptcnhTQ3NVMHkyaTRzbmc?oc=5",
         "https://news.google.com/rss/articles/CBMixAJBVV95cUxQazdVSjFSZGJ6clQ5VjllZW9lT1pXZ3pia19uYmpCOEpHdlc3OUtvQ0RGVk5jcnJJT0VRMVpxZldseXJZX1k3dm5HeGktM0NjRlYtZ0J2d2VSWi1Vc1NaT1lqVjgtc2Z5QXB6bXd3dkxZSjA0VFlDZEN5c2VEVHIzMG9BQTFGTWRzRTVtWk9ydjhqV19RVnhncDhZVnRSaDR2anYwZ1VNZHlENE1QNHpEMVdhWlFuWUdoTi0yUnV2NE9UaWJFaGNuaEFkODZsWHpKNGt2R1ZEQ2pNX2lqa0FjWWV1SEJkTGRWaWtXNHF3Y2xDb3JmeHdNZjZjNnlGakFaSEdCUEhxUWZqaFJiUHREZ3pjM3JlNjEyQVUxREk4ZDBOOUNMUnVVcGxQZk00NTlPR2RHaklMNHBpZGN6eWU2WjZwODY?oc=5",
