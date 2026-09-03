@@ -17,6 +17,9 @@ class FiberPenetrationDataTests(unittest.TestCase):
         self.assertGreaterEqual(len(data["universe"]), 25)
         self.assertGreaterEqual(len(data["aggregate"]), 50)
         self.assertGreaterEqual(len(data["cohorts"]), 220)
+        self.assertEqual(len(data["kinetic_snapshots"]), 96)
+        self.assertEqual(len(data["kinetic_curves"]), 38)
+        self.assertEqual(len(data["kinetic_annual"]), 43)
         self.assertEqual(len(data["shentel_panel"]), 195)
         self.assertEqual(len(data["shentel_summary"]), 27)
 
@@ -35,6 +38,9 @@ class FiberPenetrationDataTests(unittest.TestCase):
                 page = output.read_text(encoding="utf-8")
                 self.assertIn("Aggregate network penetration", page)
                 self.assertIn("cohort_observations.csv", page)
+                self.assertIn("Exact Kinetic quarterly cohort matrix", page)
+                self.assertIn("kinetic_quarterly_cohort_snapshots.csv", page)
+                self.assertIn("No defensible Kinetic balanced 3/6/9/12 curve", page)
                 self.assertIn("Exact Shentel cohort matrix", page)
                 self.assertIn("shentel_cohort_panel.csv", page)
                 self.assertIn("Balanced 12m average (11 cohorts)", page)
@@ -58,6 +64,36 @@ class FiberPenetrationDataTests(unittest.TestCase):
         self.assertEqual(
             {month: curve[month] for month in (0, 3, 6, 9, 12)},
             {0: 0.040, 3: 0.132, 6: 0.140, 9: 0.178, 12: 0.185},
+        )
+
+    def test_kinetic_q4_2023_has_only_observed_early_steps(self):
+        curves = dashboard.validate_data()["kinetic_curves"]
+        curve = {
+            int(row["months_since_launch"]): float(row["reported_penetration"])
+            for row in curves
+            if row["cohort_launch_period"] == "2023-Q4"
+        }
+        self.assertEqual(curve, {3: 0.20, 6: 0.24, 9: 0.26})
+        self.assertNotIn(12, curve)
+
+    def test_kinetic_annual_rollup_preserves_report_date_restatements(self):
+        annual = dashboard.validate_data()["kinetic_annual"]
+        series = {
+            row["report_period"]: float(row["reported_penetration"])
+            for row in annual
+            if row["cohort_launch_period"] == "2024"
+            and int(row["months_since_launch"]) == 12
+        }
+        self.assertEqual(
+            series,
+            {
+                "2025-Q1": 0.26,
+                "2025-Q2": 0.28,
+                "2025-Q3": 0.30,
+                "2025-Q4": 0.31,
+                "2026-Q1": 0.31,
+                "2026-Q2": 0.31,
+            },
         )
 
     def test_shentel_12_month_curve_uses_a_balanced_cohort_set(self):

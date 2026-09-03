@@ -13,6 +13,13 @@ measures how many customers actually subscribe after fiber becomes saleable.
   and penetration observations.
 - `data/cohort_observations.csv` contains build-vintage observations at a stated
   number of months after launch.
+- `data/kinetic_quarterly_cohort_snapshots.csv` preserves all 96 bars printed
+  in five Kinetic quarterly presentations, including exact repeats.
+- `data/kinetic_quarterly_cohort_curves.csv` reduces those snapshots to 38
+  distinct discrete launch-quarter × age observations at 3, 6, 9, 12, and 24
+  months. Missing ages are not interpolated.
+- `data/kinetic_annual_cohort_snapshots.csv` separately preserves the 43 annual
+  launch-year roll-up observations disclosed from Q4 2024 through Q2 2026.
 - `data/shentel_cohort_panel.csv` reconstructs Shentel's repeated quarterly
   launch-vintage charts into a report-quarter × cohort panel at 0, 3, 6, ...,
   36 months. Values are observed, not interpolated.
@@ -38,6 +45,10 @@ measures how many customers actually subscribe after fiber becomes saleable.
 7. Use balanced panels for average cohort curves. The primary Shentel 0–12
    month benchmark holds 11 launch cohorts (Q4 2022–Q2 2025) constant at every
    age; longer 24- and 36-month panels use seven and three cohorts respectively.
+8. Do not blend Kinetic's quarterly and annual cohort formats. The quarterly
+   charts expose some true 3/6/9-month paths, but the company does not disclose
+   cohort passings and switches to rolling launch-year summaries. A balanced
+   Kinetic 3/6/9/12-month curve therefore cannot be calculated from public data.
 
 ## Quality grades
 
@@ -52,6 +63,7 @@ measures how many customers actually subscribe after fiber becomes saleable.
 
 ```bash
 python -m unittest discover -s fiber_penetration/tests -v
+python fiber_penetration/extract_kinetic_cohorts.py
 python fiber_penetration/build_dashboard.py
 ```
 
