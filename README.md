@@ -13,6 +13,7 @@ Site: https://roblevinson-cloud.github.io/Broadbandmap/
 - Metronet/Lumos forward construction monitor matched to Brightspeed counties
 - Residential fiber penetration benchmarks: public-company universe, aggregate
   histories, build-vintage curves, and primary-source ledger
+- [ILEC fiber-conversion explorer](https://roblevinson-cloud.github.io/Broadbandmap/ilec_fiber_conversion_explorer.html): passings, subscribers, replacement ratios, build yield, churn, ARPU, cohorts, and source-ledger diagnostics
 
 All pages are self-contained static HTML in `docs/`.
 
