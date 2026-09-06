@@ -56,6 +56,7 @@ CREATE TABLE IF NOT EXISTS positions (
   calendar_quarter TEXT NOT NULL,
   industry TEXT,
   principal REAL,
+  shares REAL,
   amortized_cost REAL,
   fair_value REAL NOT NULL,
   price_on_principal REAL,

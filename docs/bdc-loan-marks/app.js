@@ -1,5 +1,7 @@
+import { asyncBufferFromUrl, parquetReadObjects } from './vendor/hyparquet/index.js';
+
 const app = document.querySelector('#app');
-const state = { summary: null, search: null, searchOpen: false, query: '', issuerCache: new Map(), portfolioCache: new Map() };
+const state = { summary: null, search: null, manifest: null, searchOpen: false, query: '', issuerCache: new Map(), portfolioCache: new Map() };
 const fmt = new Intl.NumberFormat('en-US', { notation: 'compact', maximumFractionDigits: 1 });
 const money = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', notation: 'compact', maximumFractionDigits: 1 });
 const number = new Intl.NumberFormat('en-US');
@@ -7,6 +9,27 @@ const esc = value => String(value ?? '—').replace(/[&<>"]/g, c => ({ '&': '&am
 const mark = value => value == null ? '—' : Number(value).toFixed(1);
 const tone = value => value == null ? '' : value < 80 ? 'mark-low' : value < 95 ? 'mark-mid' : value > 101 ? 'mark-high' : '';
 const path = relative => new URL(relative, location.href.split('#')[0]).href;
+const median = values => { const sorted = values.filter(x => x != null).sort((a,b)=>a-b); return sorted.length ? sorted[Math.floor(sorted.length / 2)] : null; };
+const pct = bps => bps == null ? null : `${(Number(bps) / 100).toFixed(2)}%`;
+
+async function readParquet(relative) {
+  const fileInfo = state.manifest.files[relative];
+  if (!fileInfo) throw Error('Parquet partition is not in the snapshot manifest');
+  const file = await asyncBufferFromUrl({ url: path(`data/${relative}`), byteLength: fileInfo.bytes });
+  return parquetReadObjects({ file });
+}
+
+function couponLabel(row) {
+  if (row.cashBps != null) return `${pct(row.cashBps)} cash${row.pikBps != null ? ` + ${pct(row.pikBps)} PIK` : ''}`;
+  if (row.benchmark && row.spreadBps != null) return `${row.benchmark} + ${pct(row.spreadBps)}`;
+  if (row.allInBps != null) return `${pct(row.allInBps)} all-in`;
+  if (row.pikBps != null) return `${pct(row.pikBps)} PIK`;
+  return '—';
+}
+
+function securityLabel(row) {
+  return [row.type, row.lien || row.seniority].filter(Boolean).join(' · ') || 'Not classified';
+}
 
 function dueBucket(date) {
   if (!date) return 'Not disclosed';
@@ -81,7 +104,7 @@ function showError(error) {
 
 function dashboard(tab = 'market') {
   const { meta, overview, portfolios } = state.summary, current = overview.trend.at(-1);
-  app.innerHTML = `<section class="hero"><div><p class="eyebrow">Private credit valuation tape</p><h1>See the same loan through every BDC’s marks.</h1><p>Search disclosed loans, open BDC portfolios, and track fair-value dispersion by issuer, industry, and maturity.</p></div>${searchBox()}</section><section class="kpis">${kpi('Loan observations',fmt.format(meta.counts.positions),`${fmt.format(meta.counts.filings)} quarterly and annual filings`)}${kpi('Active issuers',fmt.format(state.search.length),`${portfolios.length} reporting BDC portfolios`)}${kpi('Current median mark',mark(meta.currentMedianPrice),`${current?.quarter || ''} disclosed price`)}${kpi('Comparable tranches',fmt.format(meta.crossHolderMatches),'Two or more holders; confidence scored')}</section><nav class="tabs"><button class="tab ${tab==='market'?'active':''}" data-tab="market">Market & BDCs</button><button class="tab ${tab==='dispersion'?'active':''}" data-tab="dispersion">Cross-holder dispersion</button><button class="tab ${tab==='method'?'active':''}" data-tab="method">Coverage & method</button></nav><div id="tab-content"></div>`;
+  app.innerHTML = `<section class="hero"><div><p class="eyebrow">Private credit valuation tape</p><h1>See the same loan through every BDC’s marks.</h1><p>Search disclosed loans, open BDC portfolios, and track fair-value dispersion by issuer, industry, and maturity.</p></div>${searchBox()}</section><section class="kpis">${kpi('Position observations',fmt.format(meta.counts.positions),`${fmt.format(meta.counts.filings)} quarterly and annual filings`)}${kpi('Searchable issuers',fmt.format(state.search.length),`${portfolios.length} reporting BDC portfolios`)}${kpi('Current median mark',mark(meta.currentMedianPrice),`${current?.quarter || ''} disclosed price`)}${kpi('Comparable tranches',fmt.format(meta.crossHolderMatches),'Two or more holders; confidence scored')}</section><nav class="tabs"><button class="tab ${tab==='market'?'active':''}" data-tab="market">Market & BDCs</button><button class="tab ${tab==='dispersion'?'active':''}" data-tab="dispersion">Cross-holder dispersion</button><button class="tab ${tab==='method'?'active':''}" data-tab="method">Coverage & method</button></nav><div id="tab-content"></div>`;
   bindSearch();
   document.querySelector('.tabs').addEventListener('click', event => { const button = event.target.closest('[data-tab]'); if (button) dashboard(button.dataset.tab); });
   renderTab(tab);
@@ -95,11 +118,11 @@ function renderTab(tab) {
     return;
   }
   if (tab === 'method') {
-    host.innerHTML = `<div class="method-grid"><article class="method"><b>Structured SEC spine</b><p>Official SEC BDC XBRL packages provide standardized holdings from August 2022 forward.</p></article><article class="method"><b>Native static snapshot</b><p>Pages hosts current portfolios plus compact issuer histories. No remote application or service account is required.</p></article><article class="method"><b>Matching guardrail</b><p>Issuer, maturity, capital structure, and spread are combined; ambiguous matches stay out of dispersion.</p></article></div><p class="notice"><b>Interpretation:</b> Price is fair value divided by disclosed principal. FV / cost is separate. Raw values remain in each registrant’s as-filed units, so compare ratios—not raw amounts—across BDCs.</p>`;
+    host.innerHTML = `<div class="method-grid"><article class="method"><b>SEC data + filing tables</b><p>Official BDC XBRL packages provide the numeric spine; cached Schedule of Investments tables restore maturity, coupon, rank and security type when tags are missing.</p></article><article class="method"><b>CSV → Parquet</b><p>Every quarter is normalized to auditable CSV, then the complete history is compressed into small issuer and portfolio Parquet partitions fetched on demand.</p></article><article class="method"><b>Matching guardrail</b><p>Issuer, maturity, capital structure, amount and rate are combined; ambiguous matches stay out of dispersion.</p></article></div><p class="notice"><b>Interpretation:</b> Price is fair value divided by disclosed principal. FV / cost is separate. Raw values remain in each registrant’s as-filed units, so compare ratios—not raw amounts—across BDCs.</p>`;
     return;
   }
   const riskRows = overview.riskPositions.map(row => ({...row, item: state.search.find(item => item.id === row.issuerId)})).filter(row => row.item).slice(0,12);
-  host.innerHTML = `<div class="grid2"><section class="panel">${panelHead('Median disclosed price','Loan mark trend','<span class="chip">FV / principal</span>')}<div class="chart">${lineChart(overview.trend.map(x=>({...x,value:x.medianPrice,holder:'Median'})))}</div></section><section class="panel">${panelHead('Latest reported position count','Maturity wall')}${bars(overview.maturity)}</section></div><div class="grid2 grid-even"><section class="panel">${panelHead('Latest filing per vehicle','BDC portfolios','<span class="chip">Click to open</span>')}<div class="table-scroll"><table class="data-table"><thead><tr><th>BDC</th><th class="right">Fair value / AUM</th><th class="right">Issuers</th><th class="right">Wtd mark</th></tr></thead><tbody>${portfolios.map(p=>`<tr class="clickable" data-portfolio="${p.cik}"><td>${esc(p.holder)}</td><td class="right mono">${money.format(p.fairValue)}</td><td class="right mono">${number.format(p.issuers)}</td><td class="right mono ${tone(p.weightedPrice)}">${mark(p.weightedPrice)}</td></tr>`).join('')}</tbody></table></div></section><section class="panel">${panelHead('Latest filing per vehicle','Lowest disclosed marks','<span class="chip">Review queue</span>')}<div class="risk-list">${riskRows.map(r=>`<button class="risk" data-risk="${r.item.id}" data-bucket="${r.item.bucket}"><b class="${tone(r.price)}">${mark(r.price)}</b><span><strong>${esc(r.issuer)}</strong><small>${esc(r.holder)} · ${esc(r.instrument)}</small></span><span class="arrow">›</span></button>`).join('')}</div></section></div><p class="notice"><b>Portfolio fair value / AUM:</b> totals sum latest searchable debt positions and remain in each filer’s as-filed units. Use the linked EDGAR filing for audited totals.</p>`;
+  host.innerHTML = `<div class="grid2"><section class="panel">${panelHead('Median disclosed price','Loan mark trend','<span class="chip">FV / principal</span>')}<div class="chart">${lineChart(overview.trend.map(x=>({...x,value:x.medianPrice,holder:'Median'})))}</div></section><section class="panel">${panelHead('Latest reported position count','Maturity wall')}${bars(overview.maturity)}</section></div><div class="grid2 grid-even"><section class="panel">${panelHead('Latest filing per vehicle','BDC portfolios','<span class="chip">Click to open</span>')}<div class="table-scroll"><table class="data-table"><thead><tr><th>BDC</th><th class="right">Fair value / AUM</th><th class="right">Issuers</th><th class="right">Wtd mark</th></tr></thead><tbody>${portfolios.map(p=>`<tr class="clickable" data-portfolio="${p.cik}"><td>${esc(p.holder)}</td><td class="right mono">${money.format(p.fairValue)}</td><td class="right mono">${number.format(p.issuers)}</td><td class="right mono ${tone(p.weightedPrice)}">${mark(p.weightedPrice)}</td></tr>`).join('')}</tbody></table></div></section><section class="panel">${panelHead('Latest filing per vehicle','Lowest disclosed marks','<span class="chip">Review queue</span>')}<div class="risk-list">${riskRows.map(r=>`<button class="risk" data-risk="${r.item.id}" data-bucket="${r.item.bucket}"><b class="${tone(r.price)}">${mark(r.price)}</b><span><strong>${esc(r.issuer)}</strong><small>${esc(r.holder)} · ${esc(r.instrument)}</small></span><span class="arrow">›</span></button>`).join('')}</div></section></div><p class="notice"><b>Portfolio fair value / AUM:</b> totals sum the latest disclosed debt and equity positions in each vehicle. Use the linked EDGAR filing for audited totals.</p>`;
   host.addEventListener('click', event => {
     const portfolio = event.target.closest('[data-portfolio]'); if (portfolio) location.hash = `portfolio=${portfolio.dataset.portfolio}`;
     const risk = event.target.closest('[data-risk]'); if (risk) location.hash = `issuer=${risk.dataset.risk}&bucket=${risk.dataset.bucket}`;
@@ -110,7 +133,7 @@ async function portfolio(cik) {
   const summary = state.summary.portfolios.find(x => x.cik === cik);
   if (!summary) return dashboard();
   let rows = state.portfolioCache.get(cik);
-  if (!rows) { rows = await fetch(path(`data/portfolios/${cik}.json`)).then(r => { if (!r.ok) throw Error('Portfolio snapshot not found'); return r.json(); }); state.portfolioCache.set(cik, rows); }
+  if (!rows) { rows = await readParquet(`portfolios/${cik}.parquet`); state.portfolioCache.set(cik, rows); }
   state.query = '';
   const markRows = [
     {bucket:'Below 80',positions:rows.filter(x=>x.price!=null&&x.price<80).length},
@@ -118,7 +141,7 @@ async function portfolio(cik) {
     {bucket:'90–100',positions:rows.filter(x=>x.price>=90&&x.price<100).length},
     {bucket:'At / above par',positions:rows.filter(x=>x.price>=100).length}
   ];
-  app.innerHTML = `<button class="back" data-back>← All BDC portfolios</button><section class="detail-head"><div><p class="eyebrow">BDC portfolio · ${summary.date}</p><h1>${esc(summary.holder)}</h1><p>Latest searchable debt investments from the filer’s Schedule of Investments.</p></div>${searchBox()}</section><section class="kpis">${kpi('Fair value / AUM',money.format(summary.fairValue),'Searchable debt positions, as filed')}${kpi('Holdings',number.format(rows.length),'Individual disclosed loan positions')}${kpi('Issuers',number.format(summary.issuers),'Normalized active borrower names')}${kpi('Weighted mark',mark(summary.weightedPrice),'Fair value / disclosed principal')}</section><div class="grid2"><section class="panel">${panelHead('Latest portfolio','Maturity profile')}${bars(rows)}</section><section class="panel">${panelHead('Portfolio mix','Mark distribution')}${bars(markRows,'positions',['Below 80','80–90','90–100','At / above par'])}</section></div><section class="panel">${panelHead('Click an issuer for full history','Holdings',`<span class="chip">${number.format(rows.length)} positions</span>`)}<div class="table-scroll"><table class="data-table"><thead><tr><th>Issuer / instrument</th><th>Maturity</th><th class="right">Fair value</th><th class="right">Price</th><th class="right">FV / cost</th></tr></thead><tbody>${rows.sort((a,b)=>(b.fairValue||0)-(a.fairValue||0)).map(r=>`<tr class="clickable" data-issuer="${r.issuerId}"><td class="issuer-title"><strong>${esc(r.issuer)}</strong><small>${esc(r.instrument)}</small></td><td>${esc(r.maturity||'—')}</td><td class="right mono">${money.format(r.fairValue||0)}</td><td class="right mono ${tone(r.price)}">${mark(r.price)}</td><td class="right mono ${tone(r.fvCost)}">${mark(r.fvCost)}</td></tr>`).join('')}</tbody></table></div></section>`;
+  app.innerHTML = `<button class="back" data-back>← All BDC portfolios</button><section class="detail-head"><div><p class="eyebrow">BDC portfolio · ${summary.date}</p><h1>${esc(summary.holder)}</h1><p>Latest disclosed debt and equity investments from the filer’s Schedule of Investments.</p></div>${searchBox()}</section><section class="kpis">${kpi('Fair value / AUM',money.format(summary.fairValue),'Disclosed positions, as filed')}${kpi('Holdings',number.format(rows.length),'Loans, bonds, revolvers and equity')}${kpi('Issuers',number.format(summary.issuers),'Normalized active borrower names')}${kpi('Weighted mark',mark(summary.weightedPrice),'Fair value / disclosed principal')}</section><div class="grid2"><section class="panel">${panelHead('Latest portfolio','Maturity profile')}${bars(rows)}</section><section class="panel">${panelHead('Portfolio mix','Mark distribution')}${bars(markRows,'positions',['Below 80','80–90','90–100','At / above par'])}</section></div><section class="panel">${panelHead('Click an issuer for full history','Holdings',`<span class="chip">${number.format(rows.length)} positions</span>`)}<div class="table-scroll"><table class="data-table"><thead><tr><th>Issuer / instrument</th><th>Security / rank</th><th>Coupon</th><th>Maturity</th><th class="right">Principal / shares</th><th class="right">Fair value</th><th class="right">Price</th></tr></thead><tbody>${rows.sort((a,b)=>(b.fairValue||0)-(a.fairValue||0)).map(r=>`<tr class="clickable" data-issuer="${r.issuerId}"><td class="issuer-title"><strong>${esc(r.issuer)}</strong><small>${esc(r.instrument)}</small></td><td>${esc(securityLabel(r))}</td><td class="mono">${esc(couponLabel(r))}</td><td>${esc(r.maturity||'—')}</td><td class="right mono">${r.shares != null ? `${fmt.format(r.shares)} sh` : r.principal != null ? money.format(r.principal) : '—'}</td><td class="right mono">${money.format(r.fairValue||0)}</td><td class="right mono ${tone(r.price)}">${mark(r.price)}</td></tr>`).join('')}</tbody></table></div></section>`;
   bindSearch();
   document.querySelector('[data-back]').onclick = () => { location.hash = ''; };
   document.querySelector('tbody').addEventListener('click', event => { const row = event.target.closest('[data-issuer]'); if (row) { const item = state.search.find(x=>x.id===row.dataset.issuer); if (item) location.hash=`issuer=${item.id}&bucket=${item.bucket}`; } });
@@ -129,12 +152,19 @@ async function issuer(id, bucket) {
   if (!item) return dashboard();
   const key = String(bucket).padStart(2, '0');
   let data = state.issuerCache.get(key);
-  if (!data) { data = await fetch(path(`data/issuers/${key}.json`)).then(r => { if (!r.ok) throw Error('Issuer history not found'); return r.json(); }); state.issuerCache.set(key, data); }
-  const detail = data[id]; if (!detail) throw Error('Issuer is not present in this active snapshot');
-  const holdings = detail.holdings, holders = [...new Set(holdings.map(x=>x.holder))], fv = holdings.reduce((sum,x)=>sum+(x.fairValue||0),0);
-  const marks = holdings.map(x=>x.price).filter(x=>x!=null).sort((a,b)=>a-b), median = marks.length ? marks[Math.floor(marks.length/2)] : null;
+  if (!data) { data = await readParquet(`issuers/${key}.parquet`); state.issuerCache.set(key, data); }
+  const rows = data.filter(row => row.issuerId === id);
+  if (!rows.length) throw Error('Issuer is not present in this snapshot');
+  const latestByHolder = new Map();
+  rows.forEach(row => latestByHolder.set(row.holder, !latestByHolder.has(row.holder) || row.date > latestByHolder.get(row.holder) ? row.date : latestByHolder.get(row.holder)));
+  const holdings = rows.filter(row => row.date === latestByHolder.get(row.holder));
+  const grouped = new Map();
+  rows.forEach(row => { const key = `${row.quarter}\u001f${row.holder}`; if (!grouped.has(key)) grouped.set(key, []); grouped.get(key).push(row); });
+  const history = [...grouped.values()].map(group => ({ quarter: group[0].quarter, holder: group[0].holder, price: median(group.map(x=>x.price)), fvCost: median(group.map(x=>x.fvCost)) }));
+  const holders = [...new Set(holdings.map(x=>x.holder))], fv = holdings.reduce((sum,x)=>sum+(x.fairValue||0),0);
+  const currentMedian = median(holdings.map(x=>x.price));
   state.query = item.name;
-  app.innerHTML = `<button class="back" data-back>← Market overview</button><section class="detail-head"><div><p class="eyebrow">Issuer / borrower explorer</p><h1>${esc(item.name)}</h1><p>${esc(item.industry||'Industry not classified')} · last reported ${esc(item.lastReport)}</p></div>${searchBox()}</section><section class="kpis">${kpi('Current fair value',money.format(fv),'Across active holder disclosures')}${kpi('BDC holders',number.format(holders.length),holders.slice(0,3).map(esc).join(' · '))}${kpi('Current median mark',mark(median),'Fair value / disclosed principal')}${kpi('History points',number.format(detail.history.length),`${item.positions} source observations`)}</section><div class="grid2"><section class="panel">${panelHead('Quarterly holder marks','Issuer history','<span class="chip">FV / principal</span>')}<div class="chart">${lineChart(detail.history,'price')}</div></section><section class="panel">${panelHead('Current disclosed holdings','Maturity profile')}${bars(holdings)}</section></div><section class="panel">${panelHead('Latest position per active BDC','Holdings',`<span class="chip">${holdings.length} positions</span>`)}<div class="table-scroll"><table class="data-table"><thead><tr><th>BDC / instrument</th><th>Maturity</th><th class="right">Fair value</th><th class="right">Price</th><th class="right">FV / cost</th><th>Source</th></tr></thead><tbody>${holdings.sort((a,b)=>(b.fairValue||0)-(a.fairValue||0)).map(r=>`<tr><td class="issuer-title"><strong>${esc(r.holder)}</strong><small>${esc(r.instrument)}</small></td><td>${esc(r.maturity||'—')}</td><td class="right mono">${money.format(r.fairValue||0)}</td><td class="right mono ${tone(r.price)}">${mark(r.price)}</td><td class="right mono ${tone(r.fvCost)}">${mark(r.fvCost)}</td><td><a class="source" href="${esc(r.filingUrl)}" target="_blank" rel="noreferrer">EDGAR ↗</a></td></tr>`).join('')}</tbody></table></div></section>`;
+  app.innerHTML = `<button class="back" data-back>← Market overview</button><section class="detail-head"><div><p class="eyebrow">Issuer / borrower explorer</p><h1>${esc(item.name)}</h1><p>${esc(item.industry||'Industry not classified')} · last reported ${esc(item.lastReport)}</p></div>${searchBox()}</section><section class="kpis">${kpi('Current fair value',money.format(fv),'Across latest holder disclosures')}${kpi('BDC holders',number.format(holders.length),holders.slice(0,3).map(esc).join(' · '))}${kpi('Current median mark',mark(currentMedian),'Fair value / disclosed principal')}${kpi('History points',number.format(history.length),`${item.positions} source observations`)}</section><div class="grid2"><section class="panel">${panelHead('Quarterly holder marks','Issuer history','<span class="chip">FV / principal</span>')}<div class="chart">${lineChart(history,'price')}</div></section><section class="panel">${panelHead('Current disclosed holdings','Maturity profile')}${bars(holdings)}</section></div><section class="panel">${panelHead('Latest position per reporting BDC','Holdings',`<span class="chip">${holdings.length} positions</span>`)}<div class="table-scroll"><table class="data-table"><thead><tr><th>BDC / instrument</th><th>Security / rank</th><th>Coupon</th><th>Maturity</th><th class="right">Principal / shares</th><th class="right">Fair value</th><th class="right">Price</th><th>Source</th></tr></thead><tbody>${holdings.sort((a,b)=>(b.fairValue||0)-(a.fairValue||0)).map(r=>`<tr><td class="issuer-title"><strong>${esc(r.holder)}</strong><small>${esc(r.instrument)}</small></td><td>${esc(securityLabel(r))}</td><td class="mono">${esc(couponLabel(r))}</td><td>${esc(r.maturity||'—')}</td><td class="right mono">${r.shares != null ? `${fmt.format(r.shares)} sh` : r.principal != null ? money.format(r.principal) : '—'}</td><td class="right mono">${money.format(r.fairValue||0)}</td><td class="right mono ${tone(r.price)}">${mark(r.price)}</td><td><a class="source" href="${esc(r.filingUrl)}" target="_blank" rel="noreferrer">EDGAR ↗</a></td></tr>`).join('')}</tbody></table></div></section>`;
   bindSearch(); document.querySelector('[data-back]').onclick = () => { state.query=''; location.hash=''; };
 }
 
@@ -157,9 +187,10 @@ async function route() {
 
 async function init() {
   try {
-    [state.summary, state.search] = await Promise.all([
+    [state.summary, state.search, state.manifest] = await Promise.all([
       fetch(path('data/summary.json')).then(r=>r.json()),
-      fetch(path('data/search.json')).then(r=>r.json())
+      fetch(path('data/search.json')).then(r=>r.json()),
+      fetch(path('data/manifest.json')).then(r=>r.json())
     ]);
     document.querySelector('#snapshot-date').textContent = `Snapshot through ${state.summary.meta.coverageEnd}`;
     window.addEventListener('hashchange', route);

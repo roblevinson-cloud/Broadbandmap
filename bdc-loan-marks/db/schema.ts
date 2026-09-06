@@ -81,6 +81,7 @@ export const positions = sqliteTable(
     calendarQuarter: text("calendar_quarter").notNull(),
     industry: text("industry"),
     principal: real("principal"),
+    shares: real("shares"),
     amortizedCost: real("amortized_cost"),
     fairValue: real("fair_value").notNull(),
     priceOnPrincipal: real("price_on_principal"),

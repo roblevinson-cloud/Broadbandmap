@@ -49,6 +49,11 @@ DEBT_WORDS = re.compile(
     r"delayed draw|last out|first out)\b",
     re.I,
 )
+SECURITY_WORDS = re.compile(
+    rf"(?:{DEBT_WORDS.pattern}|common (?:stock|shares?|units?)|preferred "
+    r"(?:stock|shares?|units?|equity)|warrants?|equity|membership interest|llc interest)",
+    re.I,
+)
 EQUITY_ONLY_WORDS = re.compile(
     r"\b(?:common (?:stock|shares?|units?)|preferred (?:stock|shares?|units?)|"
     r"warrants?|equity|membership interest|llc interest)\b",
@@ -191,7 +196,15 @@ def classify_instrument(text: str, principal: float | None) -> tuple[str, str | 
     else:
         seniority = None
 
-    if "revolv" in lower:
+    if "warrant" in lower:
+        kind = "Warrant"
+    elif "common stock" in lower or "common share" in lower or "common unit" in lower:
+        kind = "Common equity"
+    elif "preferred" in lower and any(word in lower for word in ("stock", "share", "unit", "equity")):
+        kind = "Preferred equity"
+    elif "membership interest" in lower or "llc interest" in lower or re.search(r"\bequity\b", lower):
+        kind = "Equity interest"
+    elif "revolv" in lower:
         kind = "Revolver"
     elif "delayed draw" in lower or "ddtl" in lower:
         kind = "Delayed-draw term loan"
@@ -277,24 +290,43 @@ def split_identifier(row: dict[str, str], columns: dict[str, list[str]]) -> tupl
 
     issuer = explicit_issuer
     instrument = explicit_instrument
+    if normalize_instrument(instrument) in {
+        "non affiliated issuer", "non affiliate issuer", "controlled affiliated issuer",
+        "affiliated issuer", "debt investments", "equity investments", "investments",
+    }:
+        instrument = ""
     if identifier:
         pieces = [piece.strip() for piece in re.split(r"\s*\|\s*", identifier) if piece.strip()]
         if len(pieces) >= 2:
             issuer = issuer or pieces[0]
             instrument = instrument or " | ".join(pieces[1:])
-        elif not issuer:
+        else:
             debt_split = re.split(
                 r",\s*(?=(?:first|second|third|senior|junior|subordinated|unitranche|"
-                r"one stop|revolving|term|delayed|last out|first out|note|debt|bond))",
+                r"one stop|revolving|term|delayed|last out|first out|note|debt|bond|"
+                r"common|preferred|warrant|equity|membership|llc interest))",
                 identifier,
                 maxsplit=1,
                 flags=re.I,
             )
-            issuer = debt_split[0]
             if len(debt_split) == 2:
+                issuer = issuer or debt_split[0]
                 instrument = instrument or debt_split[1]
-        elif not instrument and DEBT_WORDS.search(identifier):
-            instrument = identifier
+            elif not instrument:
+                # Many axis members concatenate the legal borrower name and the
+                # security description without a delimiter (for example
+                # "Acme, Inc. First Lien Term Loan").  Split at the first
+                # unambiguous security phrase rather than treating the entire
+                # member as both issuer and instrument.
+                security = SECURITY_WORDS.search(identifier)
+                if security and security.start() > 0:
+                    issuer_prefix = identifier[:security.start()].rstrip(" ,;|")
+                    if not issuer or normalize_name(issuer) == normalize_name(identifier):
+                        issuer = issuer_prefix
+                    instrument = identifier[security.start():]
+                elif security:
+                    instrument = identifier
+            issuer = issuer or identifier
     instrument = instrument or investment_type or "Debt investment"
     return clean_member(issuer), clean_member(instrument)
 
@@ -330,6 +362,11 @@ def discover_columns(headers: list[str]) -> dict[str, list[str]]:
             headers,
             ["Investment Owned, Balance, Principal Amount"],
             [("principal", "amount"), ("par", "amount")],
+        ),
+        "shares": choose_columns(
+            headers,
+            ["Investment shares"],
+            [("investment", "shares"), ("shares",)],
         ),
         "cost": choose_columns(
             headers,
@@ -481,14 +518,12 @@ def ingest_package(
 
             issuer_raw, instrument_raw = split_identifier(row, columns)
             principal = parse_number(row_value(row, columns["principal"]))
+            shares = parse_number(row_value(row, columns["shares"]))
             cost = parse_number(row_value(row, columns["cost"]))
             fair = parse_number(row_value(row, columns["fair"]))
             combined_text = " ".join((issuer_raw, instrument_raw, clean_member(row_value(row, columns["investment_type"]))))
-            if not issuer_raw or fair is None or (cost is None and principal is None):
+            if not issuer_raw or fair is None or (cost is None and principal is None and shares is None):
                 continue
-            if not DEBT_WORDS.search(combined_text):
-                if principal is None or EQUITY_ONLY_WORDS.search(combined_text):
-                    continue
             if fair < 0 or (principal is not None and principal < 0) or (cost is not None and cost < 0):
                 warnings += 1
                 continue
@@ -600,10 +635,10 @@ def ingest_package(
             connection.execute(
                 """INSERT OR IGNORE INTO positions(
                      id,filing_accession,cik,issuer_id,instrument_id,report_date,calendar_quarter,
-                     industry,principal,amortized_cost,fair_value,price_on_principal,fair_value_to_cost,
+                     industry,principal,shares,amortized_cost,fair_value,price_on_principal,fair_value_to_cost,
                      all_in_rate_bps,cash_rate_bps,pik_rate_bps,floor_bps,non_accrual,currency,
                      raw_issuer,raw_instrument,source_format,extraction_confidence,filing_url)
-                   VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                   VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
                 (
                     position_id,
                     accession,
@@ -614,6 +649,7 @@ def ingest_package(
                     quarter(report_date),
                     industry,
                     principal,
+                    shares,
                     cost,
                     fair,
                     price_on_principal,
@@ -698,16 +734,21 @@ def compact_position(row: sqlite3.Row) -> dict[str, object]:
         "quarter": row["calendar_quarter"],
         "industry": row["industry"],
         "principal": row["principal"],
+        "shares": row["shares"],
         "cost": row["amortized_cost"],
         "fairValue": row["fair_value"],
         "price": row["price_on_principal"],
         "fvCost": row["fair_value_to_cost"],
         "allInBps": row["all_in_rate_bps"],
+        "cashBps": row["cash_rate_bps"],
         "pikBps": row["pik_rate_bps"],
+        "floorBps": row["floor_bps"],
         "maturity": row["maturity_date"],
         "type": row["instrument_type"],
         "seniority": row["seniority"],
         "lien": row["lien"],
+        "benchmark": row["benchmark"],
+        "spreadBps": row["spread_bps"],
         "matchConfidence": row["match_confidence"],
         "sourceConfidence": row["extraction_confidence"],
         "sourceFormat": row["source_format"],
@@ -776,7 +817,7 @@ def create_exports(connection: sqlite3.Connection, output: Path, shard_count: in
         latest_rows.extend(
             connection.execute(
                 """SELECT p.*, b.legal_name, i.canonical_name, n.maturity_date,
-                          n.instrument_type,n.seniority,n.lien,n.match_confidence
+                          n.instrument_type,n.seniority,n.lien,n.benchmark,n.spread_bps,n.match_confidence
                    FROM positions p
                    JOIN bdcs b ON b.cik=p.cik
                    JOIN issuers i ON i.id=p.issuer_id
@@ -788,7 +829,7 @@ def create_exports(connection: sqlite3.Connection, output: Path, shard_count: in
 
     trend_rows = connection.execute(
         """SELECT p.*, b.legal_name, i.canonical_name, n.maturity_date,
-                  n.instrument_type,n.seniority,n.lien,n.match_confidence
+                  n.instrument_type,n.seniority,n.lien,n.benchmark,n.spread_bps,n.match_confidence
            FROM positions p
            JOIN bdcs b ON b.cik=p.cik
            JOIN issuers i ON i.id=p.issuer_id
