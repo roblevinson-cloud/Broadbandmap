@@ -3,26 +3,19 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>BDC Loan Marks</title>
-  <meta name="description" content="Search SEC-disclosed BDC loan holdings and compare pricing across holders over time.">
-  <style>
-    :root { color-scheme: dark; font-family: Inter, system-ui, sans-serif; }
-    html, body { margin: 0; width: 100%; height: 100%; background:#07101c; color:#dbeafe; overflow:hidden; }
-    header { position:fixed; z-index:2; top:0; left:0; right:0; height:38px; display:flex; align-items:center; gap:10px; padding:0 16px; background:#07101ce8; border-bottom:1px solid #23415a; font:12px Inter,system-ui,sans-serif; }
-    header strong { color:#fff; letter-spacing:-.01em; }
-    header span { color:#7dd3fc; font-size:10px; letter-spacing:.12em; text-transform:uppercase; }
-    iframe { display:block; width:100%; height:calc(100% - 38px); margin-top:38px; border:0; }
-    .fallback { position:fixed; z-index:3; inset:38px 0 0; display:grid; place-items:center; background:#07101c; }
-    .fallback div { width:min(620px,calc(100% - 48px)); padding:42px; border:1px solid #23415a; border-radius:22px; background:#0b1724e8; box-shadow:0 24px 70px #0008; }
-    .fallback small { color:#7dd3fc; text-transform:uppercase; letter-spacing:.15em; font-weight:700; }
-    .fallback h1 { margin:14px 0 10px; font-size:clamp(30px,7vw,54px); letter-spacing:-.045em; }
-    .fallback p { color:#91a8ba; line-height:1.65; }
-    .fallback a { display:inline-block; margin-top:16px; padding:12px 16px; border-radius:10px; background:#7dd3fc; color:#062235; font-weight:750; text-decoration:none; }
-  </style>
+  <meta name="description" content="Search SEC-disclosed BDC loan holdings and compare portfolio marks across holders and over time.">
+  <meta name="theme-color" content="#07101c">
+  <title>BDC Loan Marks — SEC portfolio explorer</title>
+  <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
-  <header><strong>BDC Loan Marks</strong><span>GitHub Pages · SEC portfolio explorer</span></header>
-  <iframe src="https://bdc-loan-marks.rob-levinson.chatgpt.site/" title="BDC Loan Marks explorer" allow="fullscreen"></iframe>
-  <noscript><section class="fallback"><div><small>SEC private-credit explorer</small><h1>BDC Loan Marks</h1><p>JavaScript is required to load the searchable loan explorer.</p><a href="https://bdc-loan-marks.rob-levinson.chatgpt.site/">Open the explorer</a></div></section></noscript>
+  <header class="topbar">
+    <a class="brand" href="#"><span class="brand-mark">▰</span><span><strong>BDC Loan Marks</strong><small>EDGAR Schedule of Investments</small></span></a>
+    <span class="snapshot"><i></i><span id="snapshot-date">Loading snapshot…</span></span>
+  </header>
+  <main id="app" tabindex="-1">
+    <section class="loading"><span></span> Opening the loan tape…</section>
+  </main>
+  <script src="./app.js" defer></script>
 </body>
 </html>
