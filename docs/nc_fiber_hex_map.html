@@ -64,6 +64,7 @@ aside { border-right:1px solid var(--line); background:var(--surface); display:f
 .search { width:100%; border:1px solid var(--line-2); border-radius:3px; padding:6px 9px; font:inherit; font-size:13px;
   background:var(--surface); color:var(--ink); margin-top:8px; }
 .chk { display:flex; align-items:center; gap:7px; font-size:12.5px; color:var(--ink-2); margin-top:8px; cursor:pointer; }
+.chk select { font:inherit; font-size:12.5px; color:var(--ink); background:var(--surface); border:1px solid var(--line-2); border-radius:3px; padding:3px 6px; }
 
 .list { overflow:auto; flex:0 0 auto; max-height:38vh; min-height:160px; border-bottom:1px solid var(--line); }
 .prov { display:grid; grid-template-columns:18px 14px 1fr auto; align-items:center; gap:8px;
@@ -107,6 +108,8 @@ canvas { position:absolute; left:0; top:0; transform-origin:0 0; }
 .legend .li { display:flex; align-items:center; gap:7px; margin-top:5px; color:var(--ink-2); }
 .legend .li i { width:12px; height:12px; border-radius:2px; display:inline-block; }
 .mapwrap:focus-visible { outline:2px solid var(--accent); outline-offset:-2px; }
+.attrib { position:absolute; left:12px; bottom:40px; font-size:10.5px; color:var(--ink-3); background:var(--surface); padding:2px 7px; border-radius:3px; border:1px solid var(--line); }
+.attrib a { color:var(--ink-2); }
 .hint { position:absolute; left:12px; bottom:12px; font-size:11px; color:var(--ink-3); background:var(--surface); padding:4px 8px; border-radius:3px; border:1px solid var(--line); }
 .tip { position:absolute; pointer-events:none; background:var(--surface); border:1px solid var(--line-2); border-radius:3px;
   padding:9px 11px; font-size:12px; box-shadow:var(--shadow); max-width:300px; z-index:5; }
@@ -156,6 +159,11 @@ canvas { position:absolute; left:0; top:0; transform-origin:0 0; }
       <button data-m="ovl" aria-pressed="false">Overlap only</button>
       <button data-m="prov" aria-pressed="false">Providers only</button>
     </div>
+    <label class="chk">Basemap <select id="tileSel" aria-label="Basemap provider">
+      <option value="carto">CARTO (Positron / Dark Matter)</option>
+      <option value="osm">OpenStreetMap</option>
+      <option value="none">None (county outlines only)</option></select></label>
+    <p class="small" id="tileNote" hidden></p>
     <label class="chk"><input type="checkbox" id="baseChk" checked> Show every fiber hex faintly underneath</label>
   </div>
   <div class="stats" id="stats"></div>
@@ -165,6 +173,7 @@ canvas { position:absolute; left:0; top:0; transform-origin:0 0; }
     <p><b>Homes passed.</b> Distinct Broadband Serviceable Locations a provider reports serving with fiber, counting only residential-serviceable records (codes R and X). A multi-unit building is one location. Availability is what the provider filed, not subscriptions.</p>
     <p><b>Hexes.</b> H3 resolution 8 (about 0.67&nbsp;km&sup2; in North Carolina, roughly 0.9&nbsp;km across, 0.5&nbsp;km from centre to corner). A hex is coloured for the selected provider passing the most homes in it, or red where two or more selected providers pass the <em>same</em> homes; the red shade is the share of the hex's selected-provider homes that are passed by two or more of them. Overlap is measured home by home, not hex by hex, so two providers in the same hex but on different streets do not count as overlap.</p>
     <p><b>Identity.</b> Providers are FCC provider IDs, not brand names, so one filer using several brands counts once: Windstream's four ILEC subsidiaries, Comporium's three brands, SkyLine / SkyBest, RiverStreet's four spellings. Unrelated companies with similar names stay separate. The two brand splits used in the overbuild reports (T-Mobile rows under Lumos's ID, Uniti brands under Windstream's) do not occur in the North Carolina file, so Lumos and Windstream (Kinetic) here are exactly what those IDs filed.</p>
+    <p><b>Basemap.</b> Street tiles come from CARTO (Positron and Dark Matter, place labels drawn above the hexes; needs a free API key, 5&nbsp;million tiles a month) or from OpenStreetMap's standard tiles (no key). Where a viewer blocks external images (the claude.ai artifact view does) the map falls back to county outlines and its own city labels.</p>
     <p><b>Colours.</b> The 20 largest providers have their own hue; providers ranked 21st and beyond reuse those hues in a darker or lighter step, so rely on the checklist and the hover panel, not colour alone, to identify a small provider.</p>
   </details>
 </aside>
@@ -174,6 +183,7 @@ canvas { position:absolute; left:0; top:0; transform-origin:0 0; }
   <div class="zoom"><button id="zIn" aria-label="Zoom in">+</button><button id="zOut" aria-label="Zoom out">&minus;</button><button id="zFit" aria-label="Reset view" title="Reset view">&#8634;</button></div>
   <div class="legend" id="legend"></div>
   <div class="hint">scroll to zoom &middot; drag to pan &middot; hover for detail</div>
+  <div class="attrib">&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a></div>
   <div class="tip" id="tip" hidden></div>
 </div>
 </div>
@@ -218,15 +228,23 @@ buildColors();
 const P = D.providers.length, combos = D.combos, hexes = D.hexes, N = hexes.length;
 const comboHomes = new Float64Array(combos.length);          // statewide homes per combo
 for (const h of hexes) for (const [c, n] of h[3]) comboHomes[c] += n;
-// projection: simple equirectangular scaled at NC's mid-latitude, 1 unit = 0.01 degree
-const LAT0 = 35.3, K = Math.cos(LAT0 * Math.PI / 180), S = 100;
-const wx = lng => (lng + 80) * K * S, wy = lat => -(lat - LAT0) * S;
+// projection: Web Mercator in degree units, 1 world unit = 0.01 degree of longitude,
+// so CARTO raster tiles (also Web Mercator) can be drawn straight into world space
+const S = 100, MERC = lat => (180 / Math.PI) * Math.log(Math.tan(Math.PI / 4 + lat * Math.PI / 360));
+const Y0 = MERC(35.3);
+const wx = lng => (lng + 80) * S, wy = lat => -(MERC(lat) - Y0) * S;
 const CX = new Float32Array(N), CY = new Float32Array(N), PR = new Uint16Array(N), HOMES = new Uint32Array(N);
+const protoLatSum = new Float64Array(D.protos.length), protoCnt = new Uint32Array(D.protos.length);
 for (let i = 0; i < N; i++) {
   const h = hexes[i]; CX[i] = wx(h[0]); CY[i] = wy(h[1]); PR[i] = h[2];
+  protoLatSum[h[2]] += h[1]; protoCnt[h[2]]++;
   let t = 0; for (const e of h[3]) t += e[1]; HOMES[i] = t;
 }
-const PROTO = D.protos.map(pts => pts.map(([dlng, dlat]) => [dlng * K * S, -dlat * S]));
+// outline prototypes are stored as degree offsets; convert at each prototype's own latitude
+const PROTO = D.protos.map((pts, pi) => {
+  const lat = protoCnt[pi] ? protoLatSum[pi] / protoCnt[pi] : 35.3;
+  return pts.map(([dlng, dlat]) => [dlng * S, wy(lat + dlat) - wy(lat)]);
+});
 // spatial index for hover: bucket by ~hex width
 const HITR = Math.max(...PROTO.map(pr => Math.max(...pr.map(([x, y]) => Math.hypot(x, y)))));  // 0.43-0.49 units
 const CELL = 1.2; const grid = new Map();
@@ -288,6 +306,44 @@ function recompute(){
   stats = { union, overlap, prov, provOvl, pairs: [...pairs.entries()].sort((a, b) => b[1] - a[1]).slice(0, 6) };
 }
 
+// ---------- basemap tiles ----------
+// CARTO (Positron / Dark Matter) needs a free API key since Aug 2026 (5M tiles/month fair use);
+// OpenStreetMap's standard tiles need no key but carry their labels baked in.
+const CARTO_KEY = "";
+const BASEMAPS = {
+  carto: { name: 'CARTO', attrib: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+    base: () => dark ? 'dark_nolabels' : 'light_nolabels', labels: () => dark ? 'dark_only_labels' : 'light_only_labels',
+    url: (kind, Z, x, y) => `https://${'abcd'[(x + y) & 3]}.basemaps.cartocdn.com/rastertiles/${kind}/${Z}/${x}/${y}${dpr > 1 ? '@2x' : ''}.png?key=${encodeURIComponent(CARTO_KEY)}` },
+  osm: { name: 'OpenStreetMap', attrib: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    base: () => 'osm', labels: () => null,
+    url: (kind, Z, x, y) => `https://tile.openstreetmap.org/${Z}/${x}/${y}.png` },
+};
+const TILES = { on: true, provider: CARTO_KEY ? 'carto' : 'osm', cache: new Map() };
+function tileUrl(kind, Z, x, y){ return BASEMAPS[TILES.provider].url(kind, Z, x, y); }
+function getTile(kind, Z, x, y){
+  const key = TILES.provider + '/' + kind + '/' + Z + '/' + x + '/' + y;
+  let t = TILES.cache.get(key); if (t) return t;
+  t = { img: new Image(), ok: false };
+  t.img.crossOrigin = 'anonymous';
+  t.img.onload = () => { t.ok = true; scheduleDraw(); };
+  t.img.onerror = () => { t.err = true; };
+  t.img.src = tileUrl(kind, Z, x, y);
+  TILES.cache.set(key, t);
+  return t;
+}
+function drawTiles(kind, x0, x1, y0, y1){   // world transform must already be set
+  const Z = Math.max(3, Math.min(18, Math.round(Math.log2(z * S * 360 / 256))));
+  const n = 1 << Z, span = 360 / n, size = span * S;
+  const tx0 = Math.max(0, Math.floor((x0 / S - 80 + 180) / span)), tx1 = Math.min(n - 1, Math.floor((x1 / S - 80 + 180) / span));
+  const ty0 = Math.max(0, Math.floor((180 - (Y0 - y0 / S)) / span)), ty1 = Math.min(n - 1, Math.floor((180 - (Y0 - y1 / S)) / span));
+  if ((tx1 - tx0 + 1) * (ty1 - ty0 + 1) > 600) return;   // never fetch absurd counts
+  for (let tx = tx0; tx <= tx1; tx++) for (let ty = ty0; ty <= ty1; ty++) {
+    const t = getTile(kind, Z, tx, ty); if (!t.ok) continue;
+    const wxT = (tx * span - 180 + 80) * S, wyT = -((180 - ty * span) - Y0) * S;
+    ctx.drawImage(t.img, wxT, wyT, size, size);
+  }
+}
+
 // ---------- rendering ----------
 const wrap = document.getElementById('mapwrap'), cv = document.getElementById('map'), hv = document.getElementById('hover');
 const ctx = cv.getContext('2d'), hctx = hv.getContext('2d');
@@ -316,11 +372,12 @@ function draw(){
   ctx.setTransform(dpr * z, 0, 0, dpr * z, dpr * tx, dpr * ty);
   // world viewport for culling
   const x0 = -tx / z - 2, x1 = (W - tx) / z + 2, y0 = -ty / z - 2, y1 = (H - ty) / z + 2;
+  if (TILES.on) drawTiles(BASEMAPS[TILES.provider].base(), x0, x1, y0, y1);
   // counties
   ctx.beginPath();
   for (const rings of counties) for (const r of rings) { ctx.moveTo(r[0][0], r[0][1]); for (let i = 1; i < r.length; i++) ctx.lineTo(r[i][0], r[i][1]); ctx.closePath(); }
   ctx.fillStyle = css('--county-fill'); ctx.fill();
-  ctx.lineWidth = 1 / z; ctx.strokeStyle = css('--county'); ctx.stroke();
+  ctx.lineWidth = 1 / z; ctx.strokeStyle = css('--county'); if (TILES.on) ctx.globalAlpha = 0.55; ctx.stroke(); ctx.globalAlpha = 1;
   // hexes grouped by colour: one immediate-mode path + fill per colour
   const buckets = new Map();
   const vis = [];
@@ -344,11 +401,14 @@ function draw(){
   };
   if (showBase) { ctx.fillStyle = css('--base-hex'); fillHexes(vis); }
   const keys = [...buckets.keys()].sort((a, b) => a - b);   // providers first, overlap last (on top)
+  if (TILES.on) ctx.globalAlpha = TILES.provider === 'osm' ? 0.86 : 0.82;
   for (const k of keys) { ctx.fillStyle = k >= 1000 ? OVLC[k - 1000] : COLORS[k]; fillHexes(buckets.get(k)); }
+  ctx.globalAlpha = 1;
+  if (TILES.on) { const lk = BASEMAPS[TILES.provider].labels(); if (lk) drawTiles(lk, x0, x1, y0, y1); }
   // city labels in screen space
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   ctx.font = '600 11px Archivo, sans-serif'; ctx.textBaseline = 'middle';
-  for (const [name, lng, lat, cls] of B.cities) {
+  for (const [name, lng, lat, cls] of (TILES.on ? [] : B.cities)) {
     if (cls === 3 && z < 8) continue; if (cls === 2 && z < 4) continue;
     const sx = wx(lng) * z + tx, sy = wy(lat) * z + ty; if (sx < 0 || sx > W || sy < 0 || sy > H) continue;
     ctx.font = (cls === 1 ? '700 12.5px' : '600 11px') + ' Archivo, sans-serif';
@@ -451,6 +511,17 @@ document.getElementById('bNone').onclick = () => setAll(() => false);
 document.getElementById('bTop').onclick = () => setAll(i => i < 8);
 document.getElementById('modeSeg').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; mode = b.dataset.m; for (const x of e.currentTarget.children) x.setAttribute('aria-pressed', x === b); update(); });
 document.getElementById('baseChk').addEventListener('change', e => { showBase = e.target.checked; draw(); });
+const tileSel = document.getElementById('tileSel'), tileNote = document.getElementById('tileNote');
+const attribEl = document.querySelector('.attrib');
+function applyBasemap(v){
+  TILES.on = v !== 'none'; if (TILES.on) TILES.provider = v;
+  attribEl.hidden = !TILES.on; if (TILES.on) attribEl.innerHTML = BASEMAPS[v].attrib;
+  draw();
+}
+if (!CARTO_KEY) { tileSel.querySelector('[value="carto"]').disabled = true; tileNote.hidden = false; tileNote.textContent = 'CARTO tiles need a free API key (carto.com/basemaps/apikey); this build has none, so OpenStreetMap is used.'; }
+tileSel.value = CARTO_KEY ? 'carto' : 'osm';
+tileSel.addEventListener('change', e => applyBasemap(e.target.value));
+applyBasemap(tileSel.value);
 
 function renderStats(){
   const s = stats, nSel = sel.reduce((a, b) => a + b, 0);
