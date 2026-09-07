@@ -52,7 +52,11 @@ h2 { font-size:12px; letter-spacing:.1em; text-transform:uppercase; color:var(--
 
 .tblwrap { overflow-x:auto; border:1px solid var(--line); border-radius:10px; background:var(--surface); }
 table { width:100%; border-collapse:collapse; font-size:12.5px; min-width:760px; }
-#stateTbl { min-width:1020px; }
+#stateTbl { min-width:1620px; }
+#provTbl { min-width:1180px; }
+th.numcol, td.numcol { text-align:right; }
+th.pctcol, td.pctcol { text-align:right; color:var(--ink-2); }
+td.pctcol .pct { color:inherit; }
 th, td { padding:8px 10px; text-align:right; border-bottom:1px solid var(--line); white-space:nowrap; }
 th:first-child, td:first-child { text-align:left; position:sticky; left:0; background:var(--surface); }
 th { font-size:10.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-3); font-weight:700;
@@ -110,20 +114,27 @@ td.pct { color:var(--ink-3); font-weight:400; font-size:11px; }
 </div>
 
 <h2>By state (48)</h2>
-<p class="note">Sort by clicking a column header. Click any row to open its ten largest fiber providers and,
-for each, the other providers that overlap them most, plus the likely LEC for the state's un-fibered homes.</p>
+<p class="note">Sort by clicking a column header &mdash; homes and percent sort independently, so you can rank
+states by, say, the raw count of 1-provider homes or by what share of the state's fiber footprint that is.
+Click a row to open its ten largest fiber providers and, for each, the other providers that overlap them
+most, plus the likely LEC for the state's un-fibered homes.</p>
 <div class="tblwrap"><table id="stateTbl">
 <thead><tr>
   <th data-k="name" data-t="s">State</th>
   <th data-k="homes_passed" data-t="n">Fiber homes passed</th>
   <th data-k="total_passings" data-t="n">Total passings (any tech)</th>
   <th data-k="fiber_pct" data-t="n">Fiber penetration</th>
-  <th data-k="b1" data-t="n">1 provider</th>
-  <th data-k="b2" data-t="n">2 providers</th>
-  <th data-k="b3" data-t="n">3 providers</th>
-  <th data-k="b4" data-t="n">4+ providers</th>
+  <th data-k="b1" data-t="n">1 provider (homes)</th>
+  <th data-k="b1_pct" data-t="n">1 provider (%)</th>
+  <th data-k="b2" data-t="n">2 providers (homes)</th>
+  <th data-k="b2_pct" data-t="n">2 providers (%)</th>
+  <th data-k="b3" data-t="n">3 providers (homes)</th>
+  <th data-k="b3_pct" data-t="n">3 providers (%)</th>
+  <th data-k="b4" data-t="n">4+ providers (homes)</th>
+  <th data-k="b4_pct" data-t="n">4+ providers (%)</th>
   <th data-k="n_providers" data-t="n">Providers</th>
-  <th data-k="cu_pct" data-t="n">Copper LEC match</th>
+  <th data-k="cu_matched" data-t="n">Copper LEC matched (homes)</th>
+  <th data-k="cu_pct" data-t="n">Copper LEC match (%)</th>
 </tr></thead>
 <tbody id="stateBody"></tbody>
 </table></div>
@@ -131,7 +142,8 @@ for each, the other providers that overlap them most, plus the likely LEC for th
 <h2>By provider — national rollup (1483)</h2>
 <p class="note">Every fiber provider's total footprint across all 48 states, and how many of its homes are
 exclusive (no other selected&#8209;set fiber provider present), shared with one other provider, two others, or
-three or more others. A provider active in several states is counted once, nationally.</p>
+three or more others. A provider active in several states is counted once, nationally. Homes and percent of
+that provider's own footprint sort independently.</p>
 <div class="toolbar">
   <input class="search" id="q" type="search" placeholder="Filter providers&hellip;" aria-label="Filter providers">
   <span class="count" id="provCount"></span>
@@ -140,10 +152,14 @@ three or more others. A provider active in several states is counted once, natio
 <thead><tr>
   <th data-k="name" data-t="s">Provider</th>
   <th data-k="n" data-t="n">Total passings</th>
-  <th data-k="b0" data-t="n">Exclusive (0 others)</th>
-  <th data-k="b1" data-t="n">1 other</th>
-  <th data-k="b2" data-t="n">2 others</th>
-  <th data-k="b3" data-t="n">3+ others</th>
+  <th data-k="b0" data-t="n">Exclusive (homes)</th>
+  <th data-k="b0_pct" data-t="n">Exclusive (%)</th>
+  <th data-k="b1" data-t="n">1 other (homes)</th>
+  <th data-k="b1_pct" data-t="n">1 other (%)</th>
+  <th data-k="b2" data-t="n">2 others (homes)</th>
+  <th data-k="b2_pct" data-t="n">2 others (%)</th>
+  <th data-k="b3" data-t="n">3+ others (homes)</th>
+  <th data-k="b3_pct" data-t="n">3+ others (%)</th>
   <th data-k="states" data-t="n">States</th>
 </tr></thead>
 <tbody id="provBody"></tbody>
@@ -185,14 +201,20 @@ function pct(n, d){ return d ? (n/d*100).toFixed(1) : '0.0'; }
 // ---------- state table ----------
 const states = D.states.map(s => ({
   ...s, b1: s.buckets['1'], b2: s.buckets['2'], b3: s.buckets['3'], b4: s.buckets['4+'],
+  b1_pct: s.homes_passed ? s.buckets['1'] / s.homes_passed * 100 : 0,
+  b2_pct: s.homes_passed ? s.buckets['2'] / s.homes_passed * 100 : 0,
+  b3_pct: s.homes_passed ? s.buckets['3'] / s.homes_passed * 100 : 0,
+  b4_pct: s.homes_passed ? s.buckets['4+'] / s.homes_passed * 100 : 0,
+  cu_matched: s.copper ? s.copper.unfibered_with_copper_match : -1,
   cu_pct: s.copper ? s.copper.copper_match_pct : -1,
 }));
 let stateSort = { k: 'homes_passed', dir: -1 }, openState = null;
 
-function barCell(n, total, color){
+function numCell(n){ return n < 0 ? '&mdash;' : fmt(n); }
+function pctCell(n, total, color){
+  if (total == null || total < 0) return '&mdash;';
   const p = total ? n/total*100 : 0;
-  return `<div>${fmt(n)}</div><div class="pct">${pct(n,total)}%</div>
-    <div class="bar" style="width:${Math.max(2,p)}px;max-width:60px;background:${color}"></div>`;
+  return `<div>${pct(n,total)}%</div><div class="bar" style="width:${Math.max(2,p)}px;max-width:50px;background:${color}"></div>`;
 }
 function overlapChips(p){
   const chips = [`<span class="chip excl">${fmt(p.exclusive)} exclusive (${pct(p.exclusive,p.n)}%)</span>`];
@@ -227,17 +249,22 @@ function renderStateTable(){
     const open = openState === s.abbr;
     html += `<tr class="state-row${open ? ' open' : ''}" data-abbr="${s.abbr}">
       <td class="nm">${esc(s.name)}</td>
-      <td>${fmt(s.homes_passed)}</td>
-      <td>${fmt(s.total_passings)}</td>
-      <td><div class="v" style="font-size:14px;font-weight:700">${s.fiber_pct}%</div></td>
-      <td>${barCell(s.b1, s.homes_passed, 'var(--b1)')}</td>
-      <td>${barCell(s.b2, s.homes_passed, 'var(--b2)')}</td>
-      <td>${barCell(s.b3, s.homes_passed, 'var(--b3)')}</td>
-      <td>${barCell(s.b4, s.homes_passed, 'var(--b4)')}</td>
-      <td>${s.n_providers}</td>
-      <td>${s.copper ? `<div>${s.cu_pct}%</div><div class="pct">${fmt(s.copper.unfibered_with_copper_match)} of ${fmt(s.copper.unfibered)}</div>` : '&mdash;'}</td>
+      <td class="numcol">${fmt(s.homes_passed)}</td>
+      <td class="numcol">${fmt(s.total_passings)}</td>
+      <td class="pctcol"><div class="v" style="font-size:14px;font-weight:700">${s.fiber_pct}%</div></td>
+      <td class="numcol">${fmt(s.b1)}</td>
+      <td class="pctcol">${pctCell(s.b1, s.homes_passed, 'var(--b1)')}</td>
+      <td class="numcol">${fmt(s.b2)}</td>
+      <td class="pctcol">${pctCell(s.b2, s.homes_passed, 'var(--b2)')}</td>
+      <td class="numcol">${fmt(s.b3)}</td>
+      <td class="pctcol">${pctCell(s.b3, s.homes_passed, 'var(--b3)')}</td>
+      <td class="numcol">${fmt(s.b4)}</td>
+      <td class="pctcol">${pctCell(s.b4, s.homes_passed, 'var(--b4)')}</td>
+      <td class="numcol">${s.n_providers}</td>
+      <td class="numcol">${numCell(s.cu_matched)}</td>
+      <td class="pctcol">${s.copper ? pctCell(s.cu_matched, s.copper.unfibered, 'var(--accent)') : '&mdash;'}</td>
     </tr>
-    <tr class="detailrow${open ? '' : ' hidden'}" data-detail="${s.abbr}"><td colspan="10">${open ? renderStateDetail(s) : ''}</td></tr>`;
+    <tr class="detailrow${open ? '' : ' hidden'}" data-detail="${s.abbr}"><td colspan="15">${open ? renderStateDetail(s) : ''}</td></tr>`;
   }
   body.innerHTML = html;
   body.querySelectorAll('tr.state-row').forEach(tr => tr.addEventListener('click', () => {
@@ -257,7 +284,11 @@ document.querySelectorAll('#stateTbl th').forEach(th => th.addEventListener('cli
 renderStateTable();
 
 // ---------- national provider table ----------
-const provs = D.national.map(p => ({ ...p, b0: p.buckets['0'], b1: p.buckets['1'], b2: p.buckets['2'], b3: p.buckets['3+'] }));
+const provs = D.national.map(p => ({
+  ...p, b0: p.buckets['0'], b1: p.buckets['1'], b2: p.buckets['2'], b3: p.buckets['3+'],
+  b0_pct: p.n ? p.buckets['0'] / p.n * 100 : 0, b1_pct: p.n ? p.buckets['1'] / p.n * 100 : 0,
+  b2_pct: p.n ? p.buckets['2'] / p.n * 100 : 0, b3_pct: p.n ? p.buckets['3+'] / p.n * 100 : 0,
+}));
 let provSort = { k: 'n', dir: -1 }, provFilter = '';
 function renderProvTable(){
   let rows = provs;
@@ -266,12 +297,16 @@ function renderProvTable(){
   document.getElementById('provCount').textContent = `${rows.length.toLocaleString()} of ${provs.length.toLocaleString()} providers`;
   document.getElementById('provBody').innerHTML = rows.map(p => `<tr>
       <td class="nm" title="FCC ID ${esc(p.id)}">${esc(p.name)}</td>
-      <td>${fmt(p.n)}</td>
-      <td>${barCell(p.b0, p.n, 'var(--accent)')}</td>
-      <td>${barCell(p.b1, p.n, 'var(--b1)')}</td>
-      <td>${barCell(p.b2, p.n, 'var(--b3)')}</td>
-      <td>${barCell(p.b3, p.n, 'var(--b4)')}</td>
-      <td>${p.states}</td>
+      <td class="numcol">${fmt(p.n)}</td>
+      <td class="numcol">${fmt(p.b0)}</td>
+      <td class="pctcol">${pctCell(p.b0, p.n, 'var(--accent)')}</td>
+      <td class="numcol">${fmt(p.b1)}</td>
+      <td class="pctcol">${pctCell(p.b1, p.n, 'var(--b1)')}</td>
+      <td class="numcol">${fmt(p.b2)}</td>
+      <td class="pctcol">${pctCell(p.b2, p.n, 'var(--b3)')}</td>
+      <td class="numcol">${fmt(p.b3)}</td>
+      <td class="pctcol">${pctCell(p.b3, p.n, 'var(--b4)')}</td>
+      <td class="numcol">${p.states}</td>
     </tr>`).join('');
 }
 document.querySelectorAll('#provTbl th').forEach(th => th.addEventListener('click', () => {
