@@ -312,7 +312,7 @@ function recompute(){
 // ---------- basemap tiles ----------
 // CARTO (Positron / Dark Matter) needs a free API key since Aug 2026 (5M tiles/month fair use);
 // OpenStreetMap's standard tiles need no key but carry their labels baked in.
-const CARTO_KEY = "";
+const CARTO_KEY = "cb1_30gp_1_dce0df123d1098339bfae02b";
 const BASEMAPS = {
   carto: { name: 'CARTO', attrib: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
     base: () => dark ? 'dark_nolabels' : 'light_nolabels', labels: () => dark ? 'dark_only_labels' : 'light_only_labels',
