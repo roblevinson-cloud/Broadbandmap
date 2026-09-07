@@ -49,6 +49,13 @@ h2 { font-size:12px; letter-spacing:.1em; text-transform:uppercase; color:var(--
 .search { border:1px solid var(--line-2); border-radius:6px; padding:7px 10px; font:inherit; font-size:13px;
   background:var(--surface); color:var(--ink); min-width:220px; }
 .count { font-size:11.5px; color:var(--ink-3); margin-left:auto; }
+.minhomes { display:flex; align-items:center; gap:6px; font-size:12.5px; color:var(--ink-2); }
+.minhomes input[type=number] { width:110px; border:1px solid var(--line-2); border-radius:6px; padding:6px 8px;
+  font:inherit; font-size:13px; background:var(--surface); color:var(--ink); }
+.qbtn { border:1px solid var(--line-2); background:var(--surface); border-radius:6px; padding:5px 9px;
+  font-size:11.5px; font-weight:600; cursor:pointer; color:var(--ink-2); }
+.qbtn:hover { border-color:var(--accent); color:var(--accent); }
+.qbtn.active { background:var(--accent); color:var(--on-accent); border-color:transparent; }
 
 .tblwrap { overflow-x:auto; border:1px solid var(--line); border-radius:10px; background:var(--surface); }
 table { width:100%; border-collapse:collapse; font-size:12.5px; min-width:760px; }
@@ -143,9 +150,19 @@ most, plus the likely LEC for the state's un-fibered homes.</p>
 <p class="note">Every fiber provider's total footprint across all 48 states, and how many of its homes are
 exclusive (no other selected&#8209;set fiber provider present), shared with one other provider, two others, or
 three or more others. A provider active in several states is counted once, nationally. Homes and percent of
-that provider's own footprint sort independently.</p>
+that provider's own footprint sort independently. Sorting by a percent column tends to surface tiny
+providers with a handful of homes and no competition &mdash; set a minimum total-passings cutoff to see
+percentages only among providers of a meaningful size.</p>
 <div class="toolbar">
   <input class="search" id="q" type="search" placeholder="Filter providers&hellip;" aria-label="Filter providers">
+  <label class="minhomes">Min total passings
+    <input type="number" id="minHomes" min="0" step="1000" value="0" aria-label="Minimum total passings">
+  </label>
+  <button class="qbtn" data-min="0">Any size</button>
+  <button class="qbtn" data-min="1000">1,000+</button>
+  <button class="qbtn" data-min="10000">10,000+</button>
+  <button class="qbtn" data-min="100000">100,000+</button>
+  <button class="qbtn" data-min="1000000">1,000,000+</button>
   <span class="count" id="provCount"></span>
 </div>
 <div class="tblwrap" style="max-height:640px;overflow-y:auto"><table id="provTbl">
@@ -289,10 +306,11 @@ const provs = D.national.map(p => ({
   b0_pct: p.n ? p.buckets['0'] / p.n * 100 : 0, b1_pct: p.n ? p.buckets['1'] / p.n * 100 : 0,
   b2_pct: p.n ? p.buckets['2'] / p.n * 100 : 0, b3_pct: p.n ? p.buckets['3+'] / p.n * 100 : 0,
 }));
-let provSort = { k: 'n', dir: -1 }, provFilter = '';
+let provSort = { k: 'n', dir: -1 }, provFilter = '', minHomes = 0;
 function renderProvTable(){
   let rows = provs;
   if (provFilter) { const f = provFilter.toLowerCase(); rows = rows.filter(p => p.name.toLowerCase().includes(f)); }
+  if (minHomes > 0) rows = rows.filter(p => p.n >= minHomes);
   rows = [...rows].sort((a,b) => provSort.dir * (a[provSort.k] > b[provSort.k] ? 1 : a[provSort.k] < b[provSort.k] ? -1 : 0));
   document.getElementById('provCount').textContent = `${rows.length.toLocaleString()} of ${provs.length.toLocaleString()} providers`;
   document.getElementById('provBody').innerHTML = rows.map(p => `<tr>
@@ -318,7 +336,16 @@ document.querySelectorAll('#provTbl th').forEach(th => th.addEventListener('clic
   renderProvTable();
 }));
 document.getElementById('q').addEventListener('input', e => { provFilter = e.target.value.trim(); renderProvTable(); });
-renderProvTable();
+const minHomesInput = document.getElementById('minHomes');
+function setMinHomes(v){
+  minHomes = Math.max(0, v || 0);
+  minHomesInput.value = minHomes;
+  document.querySelectorAll('.qbtn').forEach(b => b.classList.toggle('active', +b.dataset.min === minHomes));
+  renderProvTable();
+}
+minHomesInput.addEventListener('input', () => setMinHomes(+minHomesInput.value));
+document.querySelectorAll('.qbtn').forEach(b => b.addEventListener('click', () => setMinHomes(+b.dataset.min)));
+setMinHomes(0);
 
 // ---------- national LEC table (un-fibered homes) ----------
 const lecs = CU_NATIONAL;
