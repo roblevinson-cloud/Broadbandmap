@@ -1,4 +1,27 @@
 {
   "schema_version": 1,
-  "records": []
+  "records": [
+    {
+      "id": "auto-af93481434c6552494c1",
+      "provider": "Metronet",
+      "title": "Battle Ground halts Metronet construction after residents raise concerns over property damage, communication - The Reflector",
+      "observed_date": "2026-08-04",
+      "detected_on": "2026-09-14",
+      "state": null,
+      "counties": [],
+      "city": null,
+      "matched_brightspeed_counties": [],
+      "encroachment": "unknown",
+      "stage": "announced",
+      "status": "planned",
+      "probability": 0.35,
+      "record_type": "automated_discovery",
+      "source_type": "search",
+      "source_name": "Google News — Metronet construction",
+      "source_url": "https://news.google.com/rss/articles/CBMi0wFBVV95cUxPb19qTW00TzlvYjBBV1Yxc0lDQm9iYm1Kd0VFdXNmTTNXU3c2Z3BUNFNlUGZaX09MR3JoU2VEUlIyWWhOTzNMN253MWFDLXhLUmZDZjhuaVVVTlRwNVRoYk9fNnBXcFhlTUZOaEpQV1ZtZDB6QWxRaWhJMjNTRmhRbFBubER1X1dWZktmamZrNlpuYWh1T3N2SGlXM1ZMRmlOY3ZMRmFPRG5POHR4VUVJZlNwVEhJbzhLUm50NTc5TEdRamZuNWFpbmQ0MVEyOThuTERj?oc=5",
+      "evidence_summary": "Automated discovery matched the provider and build-activity rules. Review the linked source before using the item quantitatively.",
+      "confidence": "medium",
+      "targets": {}
+    }
+  ]
 }
