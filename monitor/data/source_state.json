@@ -54,7 +54,8 @@
         "https://www.metronetbusiness.com/locations/michigan/portage",
         "https://www.microsoft.com/en-us",
         "https://www.microsoft.com/en-us/windows",
-        "https://www.reviews.org/internet-service/metronet-internet-review"
+        "https://www.reviews.org/internet-service/metronet-internet-review",
+        "https://www.t-mobile.com/home-internet/fiber"
       ]
     },
     "bing-lumos-web": {
@@ -97,6 +98,7 @@
         "https://www.lumosbot.tech/",
         "https://www.lumosfiber.com/",
         "https://www.lumosfiber.com/my-account",
+        "https://www.lumosheals.com/",
         "https://www.lumoslearning.com/llwp",
         "https://www.lumossocial.com/",
         "https://www.lumosyogaandbarre.com/",
@@ -181,6 +183,7 @@
         "https://news.google.com/rss/articles/CBMipgFBVV95cUxOUWlfWWYtWVlBNTVUREtPVFFyTGdmSFNZX3hFNVMwQmZUYlljaUtWXzg0OGYycDhRYi14eERJdFVLS2EzTVREZUZGek9oOGdVcjVuak5JTFpjekVQZDFiTFBlWEl4OHRmMmNzSnhnNDdPM0Vhd2h2OEg1STROejd4bEtzR2VaSFZyeUJXUjFab0pXTHpZcXB1WlR5aHBWSG8yVDc2MHJn?oc=5",
         "https://news.google.com/rss/articles/CBMipgFBVV95cUxPb3lqMTZQTjB1NUVxU1BhMDhXWHdFYWlyWnhXMWx3VUJhTGVLclZhQTlBZzV1MllMY2d4T3pvVWJTeHFXMklBTnp0ODVvV2poTzF0R21FMFMteGpEcEJkTHNrckxiQmg3UFRkbEhJWHp3dDhGdXRsdTBCWE1SdmduZzkzaUs4ZExlcXMyQVplWndGRy1NSFNBTEFhSmptWDRoNFVEaFdB?oc=5",
         "https://news.google.com/rss/articles/CBMipwFBVV95cUxOamF3SVNDTnY5bm1tSks2bHNRY20wWTVjdHd3SDR5UGFmbnRiUjFFVHV2RUlBSlFzUDR6Qnh2SUpuN1lfN3dGSkk2VDU4b1VsOUFFSVNJOHdkVEJrX21FMTVZY0x0TkQxVXhKZ1NzZkoyUHkxOTVTYkVPZ1d6SjQwSnNnNnp6ZkU0amZaLXVDazk2dmNCbE40RDNEX05zY2RIdS1DZ2hvNA?oc=5",
+        "https://news.google.com/rss/articles/CBMipwFBVV95cUxPY3FMMUx3aXhJZE5KMlp2Q3Jyd2R3N2dqaXZleWNSeFlSNUp6WHQ5STZYdmFYcDYwcGdkZHhELXEyTnQ0dXF3X3NZSzExZDV6Q3E2cUgyUXVfRDF3OWJJUThpRnhseHA1MGpldE5ERDY0ZjVmTm84T0czQll5bXNuOVN1LTYxaVFlQWdjRm1uYVYtd0tia0twbXJuWmpXUVR2cmE0YUw3Yw?oc=5",
         "https://news.google.com/rss/articles/CBMiqAFBVV95cUxNS25JZU1Nd1I1bHhTT3l5RmhxeVdvaWdQNGpsYmx6SzdWTDBpQXJKUXp4R1dFaEJaY01qMklSMS1zOFhlb2hXVVhuaUFTelFsbmJNOUc4V1pHLUREZVF5VGdYRmdaZ2UycldVVDJjUnBSVXNKUUJHd0N6WVNzRUVjMmVMbE5JS3BKNkc4SlZzSjBMOURIQlRkb2VOTmxmNTFaalFuVTgtOFc?oc=5",
         "https://news.google.com/rss/articles/CBMiqAFBVV95cUxQNnE2aW43TXlTYnRyVnZscGx6U1FWZWJxMnRwaWxSOVFXQkE4QXhScnRDb0lIaFNVTDFIQUQyR3djb3BVeWtWWG9HWmlZVWotOHJSUWJxQlpZUDRNTW5ScW5DYW41UmtIZkxkWDU2RlVZQmNlUE10NFowSk15Tm5BRUc0QnpKX3J3NDJSWG51cTJPbXFLZ3E0U0dVOUxndWttUVBXdkRWV2vSAbABQVVfeXFMTXlIVDVwRUtXNm9scHJUanNKRUQyc3dhNVh2R1FXclFuV1ZfNS04OWx2MWJRLU1xUGxQUVlCbWZWWjVjVmx2MWViRzV2UjhSQVRXY1NyMU55bUJrNEl1akJRa3UyYnItMmFibk03Y0hzQ1ZESlhBemlqR0FURjE0Uno5UVlrRUxySThpN1hSOTJkRlMtZmRQVUI5YmthOFU3SGpPaHVQamhSWDREN21qajQ?oc=5",
         "https://news.google.com/rss/articles/CBMiqgFBVV95cUxNaDZMRVFHd3BodDRDcUMtbjk3R0J1WENtN3c3WC1qSnNHRnhzS0dJcm80QVM1NUNzX1NiNm9naGZ0NVhGNWtIVmtjakVPX2FaLXN3dnlRdEJLRVg3NWVaN09BN0I3ekczU3NQU29Fd0VFZFg1UjJfd3Nuamx1S2RTWk9ZN0JBMm8tTDVseHRTLXVuelU3aDFXSHNtRHhRY29pSEVKNi1xYWNvQQ?oc=5",
