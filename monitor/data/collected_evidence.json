@@ -2,6 +2,28 @@
   "schema_version": 1,
   "records": [
     {
+      "id": "auto-1423de4028eb09febfce",
+      "provider": "Metronet",
+      "title": "MetroNet | City of Norfolk, Virginia - Official Website",
+      "observed_date": "2026-09-27",
+      "detected_on": "2026-09-28",
+      "state": "VA",
+      "counties": [],
+      "city": null,
+      "matched_brightspeed_counties": [],
+      "encroachment": "state_only",
+      "stage": "construction",
+      "status": "active",
+      "probability": 0.95,
+      "record_type": "automated_discovery",
+      "source_type": "search",
+      "source_name": "Bing web — Metronet construction",
+      "source_url": "https://www.norfolk.gov/5116/MetroNet",
+      "evidence_summary": "Automated discovery matched the provider and build-activity rules. Review the linked source before using the item quantitatively.",
+      "confidence": "medium",
+      "targets": {}
+    },
+    {
       "id": "auto-af93481434c6552494c1",
       "provider": "Metronet",
       "title": "Battle Ground halts Metronet construction after residents raise concerns over property damage, communication - The Reflector",
