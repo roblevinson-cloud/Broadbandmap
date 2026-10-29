@@ -48,6 +48,7 @@
         "https://myaccount.microsoft.com/login",
         "https://portal.metronet.com/cp/login",
         "https://portal.metronet.com/cp/quickpay",
+        "https://property.whitepages.com/property/wy/thermopolis/1320-amoretti-st/70726f2d526b7a4570587878596d4c",
         "https://support.microsoft.com/en-gb/contactus",
         "https://support.microsoft.com/en-us/accounts-billing/cancel-an-order-or-pre-order-from-microsoft-store",
         "https://support.microsoft.com/en-us/forms/sign-in-to-microsoft-forms",
@@ -64,6 +65,8 @@
         "https://www.brla.gov/2727/MetroNet",
         "https://www.compareinternethub.com/provider/metronet",
         "https://www.consumeraffairs.com/cable_tv/metronet.html",
+        "https://www.countyoffice.org/amoretti-st-thermopolis-wy-property-records",
+        "https://www.homes.com/property/1320-amoretti-st-thermopolis-wy/gn98z5rs4krjj",
         "https://www.linkedin.com/company/microsoft",
         "https://www.loc8nearme.com/iowa/davenport/metronet-davenport/7089268",
         "https://www.metro.net/",
@@ -85,8 +88,15 @@
         "https://www.microsoft.com/en-us",
         "https://www.microsoft.com/en-us/windows",
         "https://www.norfolk.gov/5116/MetroNet",
+        "https://www.realtor.com/local/property-records/wyoming/hot-springs-county/thermopolis/amoretti-st",
+        "https://www.realtor.com/realestateandhomes-detail/1303-Amoretti-St_Thermopolis_WY_82443_M73213-62018",
+        "https://www.realtor.com/realestateandhomes-detail/1320-Amoretti-St_Thermopolis_WY_82443_M73197-96849",
+        "https://www.redfin.com/WY/Thermopolis/1320-Amoretti-St-82443/home/134604975",
         "https://www.reviews.org/internet-service/metronet-internet-review",
-        "https://www.t-mobile.com/home-internet/fiber"
+        "https://www.t-mobile.com/home-internet/fiber",
+        "https://www.trulia.com/home/1320-amoretti-st-thermopolis-wy-82443-114590018",
+        "https://www.zillow.com/homedetails/1320-Amoretti-St-Thermopolis-WY-82443/114590018_zpid",
+        "https://www.zillow.com/homedetails/806-Amoretti-St-Thermopolis-WY-82443/114590116_zpid"
       ]
     },
     "bing-lumos-web": {
