@@ -1,7 +1,7 @@
 <!doctype html><html lang="en"><head>
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta charset="utf-8">
-<title>Fiber-on-Fiber Overlap</title>
+<title>Fiber-on-Fiber Overlap — FCC BDC, June 2026</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
 <style>
@@ -180,21 +180,22 @@
 </head>
 <body>
 <div class="wrap">
-  <p class="eyebrow">FCC BDC · December 31, 2025 · passings (BSL) basis</p>
+  <p class="eyebrow">FCC BDC · June 30, 2026 · passings (BSL) basis</p>
   <h1>Fiber-on-Fiber Overlap</h1>
   <p class="sub">Share of each provider's fiber passings that are also covered by another
   fiber provider — split by whether 0, 1, or 2+ other fiber networks report service
   at the same location.</p>
-  <p class="lede"><strong>Google Fiber is the most overbuilt fiber footprint in the country
-  (64% overlapped)</strong> — a consequence of building where AT&amp;T already is. Brightspeed
-  (48%) is the most-overlapped incumbent telco. At the other end, the big ILECs defend
-  mostly exclusive footprints: AT&amp;T and Frontier are ~78% sole-fiber, Verizon 81%,
-  Ziply 85%, and altafiber's Cincinnati footprint is 91% exclusive — the least
-  overbuilt of the fourteen.</p>
+  <p class="lede"><strong>Google Fiber is still the most overbuilt fiber footprint in the country
+  (67% overlapped)</strong> &mdash; above all by AT&amp;T (1.05M shared passings), whose filing
+  now includes the Quantum Fiber footprint it bought from Lumen. Brightspeed (43%) is the most-overlapped
+  incumbent telco, down from 48% in December mainly because Metronet, its largest overlapper, now files as
+  business-only (see note). At the other end, the big ILECs defend mostly exclusive footprints: AT&amp;T and Frontier
+  are ~77% sole-fiber, Verizon 81%, Ziply 84%,
+  and altafiber's Cincinnati footprint is 90% exclusive &mdash; the least overbuilt of the fourteen.</p>
 
   <h2>Overlap distribution</h2>
   <p class="sectionsub">Each bar is 100% of that provider's residential-capable fiber
-  passings, Dec 31 2025. Hover any segment for counts.</p>
+  passings, Jun 30 2026. Hover any segment for counts.</p>
   <div class="legend">
     <div class="chip"><span class="sw sw0"></span>0 other fiber providers</div>
     <div class="chip"><span class="sw sw1"></span>1 other</div>
@@ -219,11 +220,25 @@
 
   <div class="note"><strong>Why business-only filings are excluded.</strong> Altice's
   Lightpath unit files fiber availability at 5.4M locations across the Northeast and
-  mid-Atlantic — 100% of them business-only records. Counting those as "fiber overlap"
-  would nearly double Verizon's overlapped share (18.7% → 39.1%) without a single
+  mid-Atlantic &mdash; 100% of them business-only records. Counting those as "fiber overlap"
+  would roughly double Verizon's overlapped share (19.2% &rarr; 39.3%) without a single
   competing residential fiber passing. This analysis therefore counts only records coded
   residential or both (R/X), on both sides of every comparison. Altice's real Optimum
-  FTTH overbuild still shows up — it is Verizon's #1 overlapper at 1.6M shared passings.</div>
+  FTTH overbuild still shows up &mdash; it is Verizon's #1 overlapper at 1.6M shared passings.</div>
+
+  <div class="note"><strong>Metronet filed business-only in June 2026.</strong> Metronet (FCC provider ID 131081)
+  reports its Metronet-branded fiber &mdash; 2.52M locations &mdash; as business-only (code B) in this
+  filing; in December the same locations also carried residential records. On this page's residential basis only its
+  Vexus Fiber footprint in Texas, Louisiana and New Mexico remains (367,476 passings, 57.3% overlapped),
+  and Metronet drops out as an overlapper of AT&amp;T, Brightspeed, Windstream and others, so their overlap shares are
+  understated relative to December. On an all-records basis Metronet's footprint is 2,888,144 fiber
+  passings, 46.3% overlapped (December, residential basis: 2,612,686 and 39.5%).</div>
+
+  <div class="note"><strong>Lumen's fiber now files under AT&amp;T.</strong> 2.92M of the 3.16M
+  residential fiber passings Lumen filed in December are filed in June 2026 under AT&amp;T's provider ID (130077),
+  brand Quantum Fiber, following AT&amp;T's purchase of Lumen's consumer fiber business. AT&amp;T's row therefore includes
+  them, and the Lumen row is only the 150,716 CenturyLink-branded fiber passings still filed under Lumen's
+  own ID (130228). Former AT&amp;T&ndash;Quantum overlaps now count as one provider.</div>
 
   <h2>Who is doing the overlapping</h2>
   <p class="sectionsub">Top three other fiber providers on each subject's footprint, by shared passings.</p>
@@ -232,8 +247,9 @@
   <h2>The acquired cohort</h2>
   <p class="sectionsub">Fiber providers of 100k+ passings whose control changed hands
   between September 2022 and August 2026 (announced or closed) and that are not among
-  the fourteen above. Same basis and color coding; footprints measured at Dec 31 2025
-  regardless of deal status.</p>
+  the fourteen above. Same basis and color coding. <strong>This section is measured at Dec 31, 2025 and is not
+  updated to June 2026</strong>: several of these networks (Tachus, Clearwave) now file under their acquirers'
+  IDs, and deal statuses are as of August 2026.</p>
   <div class="legend">
     <div class="chip"><span class="sw sw0"></span>0 other fiber providers</div>
     <div class="chip"><span class="sw sw1"></span>1 other</div>
@@ -251,7 +267,7 @@
     </table>
   </div>
   <div class="note"><strong>The M&amp;A market has been buying overbuilders.</strong>
-  The fourteen incumbents above mostly sit at 15–35% overlap; the acquired cohort clusters
+  At Dec 31, 2025 the fourteen incumbents mostly sat at 15–35% overlap; the acquired cohort clustered
   at 40–70% — GoNetspeed (70%), IdeaTek (67%), Tachus (64%). The utility-like exceptions:
   Gateway Fiber (10.5%) and i3 Broadband (32%). Not shown: cable-hybrid acquirees (Cox →
   Charter, WOW! → DigitalBridge/Crestview), whose footprints are mostly HFC; Vexus, whose
@@ -264,20 +280,21 @@
   <h2>Method</h2>
   <ul class="method">
     <li><strong>Source:</strong> FCC Broadband Data Collection fixed availability,
-    as-of 12/31/2025 (July 2026 public release), technology code 50 (fiber to the
-    premises), all 50 states + DC — 71.3M fiber-passed BSLs, 1,570 fiber filers.</li>
+    as-of 06/30/2026 (October 2026 public release), technology code 50 (fiber to the
+    premises), all 50 states + DC &mdash; 74.8M fiber-passed BSLs, 1,551 fiber filers.</li>
     <li><strong>Passings basis:</strong> distinct broadband-serviceable locations.
     A multi-unit building counts as one BSL, so MDU-heavy footprints (Hotwire,
     Verizon, Blue Stream) show fewer BSLs than their marketed unit passings.</li>
-    <li><strong>Overlap:</strong> another distinct filing provider (any of the 1,570,
+    <li><strong>Overlap:</strong> another distinct filing provider (any of the 1,551,
     not just these fourteen) reporting technology 50 at the same location_id in the
     same vintage. Keyed by provider_id, never brand.</li>
     <li><strong>Entity notes:</strong> Windstream = all Kinetic subsidiaries plus
-    Uniti entities (one filing ID). Metronet includes Vexus. Lumen = Quantum Fiber +
-    CenturyLink brands. altafiber excludes sister company Hawaiian Telcom
-    (254k BSLs, same filing ID). Consolidated = Fidium's filing entity only.</li>
+    Uniti entities (one filing ID). Metronet includes Vexus (residential rows are Vexus
+    only in this vintage; see note). AT&amp;T includes Quantum Fiber from this vintage; Lumen = the CenturyLink
+    brand left under ID 130228. altafiber excludes sister company Hawaiian Telcom
+    (262k BSLs, same filing ID). Consolidated = Fidium's filing entity only.</li>
     <li><strong>Acquired cohort:</strong> screened to targets with 100k+ residential-capable
-    fiber BSLs at Dec 2025; deal window Sept 2022 – Aug 2026 by announce or close date;
+    fiber BSLs at Dec 2025 (section not updated); deal window Sept 2022 – Aug 2026 by announce or close date;
     majority-control changes only. Lumos = provider ID 130403 filtered to Lumos-branded
     records (the same ID also files T-Mobile Fiber). Empire Access = its filing entity
     (Empire Long Distance), which includes sister brands. Pending deals (the three T-Mobile
@@ -287,43 +304,43 @@
     ISP counts as a separate overlapper, which inflates 2+ counts in those areas.</li>
   </ul>
 
-  <footer>fcc bdc 2025-12-31 · tech 50 · residential-capable (R/X) · analysis 2026-08-31 ·
+  <footer>fcc bdc 2026-06-30 &middot; tech 50 &middot; residential-capable (R/X) &middot; analysis 2026-10-31 (acquired cohort: 2025-12-31, analysis 2026-08-31) ·
   companion csvs: fiber14_overlap_summary · _by_state · _top_overlappers</footer>
 </div>
 <div id="tip"></div>
 
 <script>
 const DATA = [
-  ["Google Fiber","1.9M passings",678239,1017869,190151,36.0,54.0,10.1,64.0,1886259],
-  ["Brightspeed","1.8M passings",934842,806072,52572,52.1,44.9,2.9,47.9,1793486],
-  ["Blue Stream Fiber","57k passings",33711,23126,481,58.8,40.3,0.8,41.2,57318],
-  ["Metronet","2.6M passings",1581092,943417,88177,60.5,36.1,3.4,39.5,2612686],
-  ["Hotwire","144k passings",90583,48526,4689,63.0,33.7,3.3,37.0,143798],
-  ["Consolidated (Fidium)","1.0M passings",672018,323575,38186,65.0,31.3,3.7,35.0,1033779],
-  ["Windstream (Kinetic)","1.4M passings",948096,451663,43863,65.7,31.3,3.0,34.3,1443622],
-  ["Lumen (Quantum)","3.2M passings",2277150,713929,166655,72.1,22.6,5.3,27.9,3157734],
-  ["AT&T","19.4M passings",15191222,3827500,356650,78.4,19.8,1.8,21.6,19375372],
-  ["Frontier","6.5M passings",5138778,1210412,196766,78.5,18.5,3.0,21.5,6545956],
-  ["ALLO","437k passings",353149,78786,4685,80.9,18.0,1.1,19.1,436620],
-  ["Verizon","9.4M passings",7616013,1732921,15319,81.3,18.5,0.2,18.7,9364253],
-  ["Ziply Fiber","764k passings",647000,87073,29856,84.7,11.4,3.9,15.3,763929],
-  ["altafiber","699k passings",639513,59328,652,91.4,8.5,0.1,8.6,699493],
+  ["Google Fiber", "2.0M passings", 679258, 1132953, 220505, 33.4, 55.7, 10.8, 66.6, 2032716],
+  ["Metronet", "367k passings &middot; Vexus only, see note", 157052, 194569, 15855, 42.7, 52.9, 4.3, 57.3, 367476],
+  ["Blue Stream Fiber", "113k passings", 54465, 54453, 3902, 48.3, 48.3, 3.5, 51.7, 112820],
+  ["Brightspeed", "2.0M passings", 1120083, 795547, 59936, 56.7, 40.3, 3.0, 43.3, 1975566],
+  ["Lumen (CenturyLink)", "151k passings &middot; see note", 90664, 52112, 7940, 60.2, 34.6, 5.3, 39.8, 150716],
+  ["Hotwire", "156k passings", 96072, 52590, 7154, 61.7, 33.8, 4.6, 38.3, 155816],
+  ["Consolidated (Fidium)", "1.1M passings", 713979, 348869, 44353, 64.5, 31.5, 4.0, 35.5, 1107201],
+  ["Windstream (Kinetic)", "1.6M passings", 1119259, 469867, 47762, 68.4, 28.7, 2.9, 31.6, 1636888],
+  ["ALLO", "480k passings", 365667, 96792, 17154, 76.2, 20.2, 3.6, 23.8, 479613],
+  ["AT&T", "23.5M passings", 18158396, 4761124, 576933, 77.3, 20.3, 2.5, 22.7, 23496453],
+  ["Frontier", "6.9M passings", 5415207, 1285555, 241067, 78.0, 18.5, 3.5, 22.0, 6941829],
+  ["Verizon", "9.5M passings", 7686822, 1802496, 18277, 80.8, 19.0, 0.2, 19.2, 9507595],
+  ["Ziply Fiber", "789k passings", 662446, 95099, 31761, 83.9, 12.0, 4.0, 16.1, 789306],
+  ["altafiber", "721k passings", 651695, 68883, 115, 90.4, 9.6, 0.0, 9.6, 720693],
 ];
 const TOPS = {
-  "Google Fiber":[["AT&T","806,674"],["Everfast Fiber","260,034"],["Quantum Fiber","158,553"]],
-  "Brightspeed":[["Metronet","105,045"],["Lumos","46,724"],["AT&T","43,305"]],
-  "Blue Stream Fiber":[["Home Town Cable","8,732"],["Quantum Fiber","4,809"],["AT&T","4,009"]],
-  "Metronet":[["AT&T","431,441"],["Frontier","115,586"],["Brightspeed","105,045"]],
-  "Hotwire":[["AT&T","37,050"],["Frontier","4,501"],["Spectrum","4,317"]],
-  "Consolidated (Fidium)":[["Ezee Fiber","85,733"],["GoNetspeed","83,173"],["AT&T","50,087"]],
-  "Windstream (Kinetic)":[["Metronet","58,102"],["ALLO","36,290"],["Ezee Fiber","28,186"]],
-  "Lumen (Quantum)":[["Google Fiber","158,553"],["Cox","135,671"],["Metronet","91,776"]],
-  "AT&T":[["Google Fiber","806,674"],["Metronet","431,441"],["Spectrum","289,799"]],
-  "Frontier":[["GoNetspeed","273,718"],["Optimum (Altice)","174,085"],["Metronet","115,586"]],
-  "ALLO":[["Windstream (Kinetic)","36,290"],["Quantum Fiber","21,440"],["Great Plains Bband","7,652"]],
-  "Verizon":[["Optimum (Altice)","1,609,491"],["Xfinity","31,779"],["Greenlight Networks","18,647"]],
-  "Ziply Fiber":[["TDS Telecom","29,991"],["Chelan County PUD","23,369"],["Native Network","22,248"]],
-  "altafiber":[["AT&T","32,479"],["Point Broadband","8,579"],["Spectrum","6,545"]],
+  "Google Fiber":[["AT&T", "1,053,852"], ["Everfast Fiber", "328,180"], ["Frontier", "35,654"]],
+  "Metronet":[["AT&T", "157,712"], ["Frontier", "19,211"], ["Windstream (Kinetic)", "10,657"]],
+  "Blue Stream Fiber":[["AT&T", "18,760"], ["Home Town Cable", "15,546"], ["Frontier", "12,188"]],
+  "Brightspeed":[["Lumos", "57,540"], ["Spectrum", "48,931"], ["AT&T", "46,243"]],
+  "Lumen (CenturyLink)":[["Hunter Communications", "7,534"], ["TDS Telecom", "5,880"], ["Intrepid Fiber", "4,284"]],
+  "Hotwire":[["AT&T", "40,711"], ["Spectrum", "7,639"], ["Frontier", "4,402"]],
+  "Consolidated (Fidium)":[["Ezee Fiber", "122,796"], ["GoNetspeed", "84,123"], ["AT&T", "50,938"]],
+  "Windstream (Kinetic)":[["ALLO", "37,175"], ["Ezee Fiber", "33,311"], ["Spectrum", "26,717"]],
+  "ALLO":[["Windstream (Kinetic)", "37,175"], ["AT&T", "27,861"], ["Intrepid Fiber", "27,256"]],
+  "AT&T":[["Google Fiber", "1,053,852"], ["Spectrum", "377,600"], ["Sonic", "278,236"]],
+  "Frontier":[["GoNetspeed", "293,548"], ["Optimum (Altice)", "175,343"], ["Xfinity", "127,436"]],
+  "Verizon":[["Optimum (Altice)", "1,641,450"], ["Xfinity", "38,223"], ["Greenlight Networks", "28,547"]],
+  "Ziply Fiber":[["TDS Telecom", "33,176"], ["Chelan County PUD", "23,204"], ["Native Network", "22,108"]],
+  "altafiber":[["AT&T", "37,853"], ["Point Broadband", "9,280"], ["Spectrum", "8,390"]],
 };
 // acquired cohort (100k+ passings, deal Sep 2022 - Aug 2026, not on the list
 // above, cable-hybrids excluded): name, sub, c0, c1, c2, p0, p1, p2, pAny,
