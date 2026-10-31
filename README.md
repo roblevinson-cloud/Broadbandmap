@@ -1,10 +1,10 @@
 ﻿# US Broadband Competition Explorers
 
 Interactive maps and dashboards of US fixed-broadband competition, built from
-FCC Broadband Data Collection availability filings (semiannual vintages from
-June 2022: through June 2026 for the state explorers and fiber overlap pages,
-through December 2025 for the national, provider and metro pages) and Census
-TIGER/Line 2020 geographies.
+FCC Broadband Data Collection availability filings (9 semiannual vintages,
+June 2022 - June 2026, for the state, national, provider and metro explorers
+and fiber overlap pages; the Buckeye deep-dive and anchor-footprint workbook
+are as of December 2025) and Census TIGER/Line 2020 geographies.
 
 Site: https://roblevinson-cloud.github.io/Broadbandmap/
 
