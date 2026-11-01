@@ -186,11 +186,10 @@
   fiber provider — split by whether 0, 1, or 2+ other fiber networks report service
   at the same location.</p>
   <p class="lede"><strong>Google Fiber is still the most overbuilt fiber footprint in the country
-  (67% overlapped)</strong> &mdash; above all by AT&amp;T (1.05M shared passings), whose filing
-  now includes the Quantum Fiber footprint it bought from Lumen. Brightspeed (43%) is the most-overlapped
-  incumbent telco, down from 48% in December mainly because Metronet, its largest overlapper, now files as
-  business-only (see note). At the other end, the big ILECs defend mostly exclusive footprints: AT&amp;T and Frontier
-  are ~77% sole-fiber, Verizon 81%, Ziply 84%,
+  (68% overlapped)</strong> &mdash; above all by AT&amp;T (1.05M shared passings), whose filing
+  now includes the Quantum Fiber footprint it bought from Lumen. Brightspeed (49%) is the most-overlapped
+  incumbent telco. At the other end, the big ILECs defend mostly exclusive footprints: AT&amp;T and Frontier
+  are ~76% sole-fiber, Verizon 81%, Ziply 84%,
   and altafiber's Cincinnati footprint is 90% exclusive &mdash; the least overbuilt of the fourteen.</p>
 
   <h2>Overlap distribution</h2>
@@ -228,11 +227,10 @@
 
   <div class="note"><strong>Metronet filed business-only in June 2026.</strong> Metronet (FCC provider ID 131081)
   reports its Metronet-branded fiber &mdash; 2.52M locations &mdash; as business-only (code B) in this
-  filing; in December the same locations also carried residential records. On this page's residential basis only its
-  Vexus Fiber footprint in Texas, Louisiana and New Mexico remains (367,476 passings, 57.3% overlapped),
-  and Metronet drops out as an overlapper of AT&amp;T, Brightspeed, Windstream and others, so their overlap shares are
-  understated relative to December. On an all-records basis Metronet's footprint is 2,888,144 fiber
-  passings, 46.3% overlapped (December, residential basis: 2,612,686 and 39.5%).</div>
+  filing; in December the same locations carried residential records. They are counted as homes here because the
+  same locations were residential in December 2025, so Metronet's row (2,888,144 passings,
+  42.7% overlapped; December: 2,612,686 and 39.5%) and its overlaps with AT&amp;T, Brightspeed and others
+  are on the same footing as December. In the June 2026 filing, some providers recoded locations they had filed as residential in December 2025 as business-only (code B): Peoples Communications (ID 131031) 10,559; Highline Internet (ID 460005) 5,421; Etex Communications (ID 130464) 5,072; AireBeam Fiber Internet (ID 470030) 4,157; Auburn Essential Services (ID 180010) 1,855. Those locations are counted as homes here.</div>
 
   <div class="note"><strong>Lumen's fiber now files under AT&amp;T.</strong> 2.92M of the 3.16M
   residential fiber passings Lumen filed in December are filed in June 2026 under AT&amp;T's provider ID (130077),
@@ -311,33 +309,33 @@
 
 <script>
 const DATA = [
-  ["Google Fiber", "2.0M passings", 679258, 1132953, 220505, 33.4, 55.7, 10.8, 66.6, 2032716],
-  ["Metronet", "367k passings &middot; Vexus only, see note", 157052, 194569, 15855, 42.7, 52.9, 4.3, 57.3, 367476],
-  ["Blue Stream Fiber", "113k passings", 54465, 54453, 3902, 48.3, 48.3, 3.5, 51.7, 112820],
-  ["Brightspeed", "2.0M passings", 1120083, 795547, 59936, 56.7, 40.3, 3.0, 43.3, 1975566],
-  ["Lumen (CenturyLink)", "151k passings &middot; see note", 90664, 52112, 7940, 60.2, 34.6, 5.3, 39.8, 150716],
-  ["Hotwire", "156k passings", 96072, 52590, 7154, 61.7, 33.8, 4.6, 38.3, 155816],
-  ["Consolidated (Fidium)", "1.1M passings", 713979, 348869, 44353, 64.5, 31.5, 4.0, 35.5, 1107201],
-  ["Windstream (Kinetic)", "1.6M passings", 1119259, 469867, 47762, 68.4, 28.7, 2.9, 31.6, 1636888],
-  ["ALLO", "480k passings", 365667, 96792, 17154, 76.2, 20.2, 3.6, 23.8, 479613],
-  ["AT&T", "23.5M passings", 18158396, 4761124, 576933, 77.3, 20.3, 2.5, 22.7, 23496453],
-  ["Frontier", "6.9M passings", 5415207, 1285555, 241067, 78.0, 18.5, 3.5, 22.0, 6941829],
-  ["Verizon", "9.5M passings", 7686822, 1802496, 18277, 80.8, 19.0, 0.2, 19.2, 9507595],
+  ["Google Fiber", "2.0M passings", 660340, 1128991, 243385, 32.5, 55.5, 12.0, 67.5, 2032716],
+  ["Blue Stream Fiber", "113k passings", 54464, 54454, 3902, 48.3, 48.3, 3.5, 51.7, 112820],
+  ["Brightspeed", "2.0M passings", 1000475, 909420, 65671, 50.6, 46.0, 3.3, 49.4, 1975566],
+  ["Lumen (CenturyLink)", "151k passings &middot; see note", 86122, 55953, 8641, 57.1, 37.1, 5.7, 42.9, 150716],
+  ["Metronet", "2.9M passings &middot; see note", 1655093, 1127033, 106018, 57.3, 39.0, 3.7, 42.7, 2888144],
+  ["Hotwire", "156k passings", 96031, 52601, 7184, 61.6, 33.8, 4.6, 38.4, 155816],
+  ["Consolidated (Fidium)", "1.1M passings", 712418, 350415, 44368, 64.3, 31.6, 4.0, 35.7, 1107201],
+  ["Windstream (Kinetic)", "1.6M passings", 1062458, 522869, 51561, 64.9, 31.9, 3.1, 35.1, 1636888],
+  ["AT&T", "23.5M passings", 17738223, 5118119, 640111, 75.5, 21.8, 2.7, 24.5, 23496453],
+  ["ALLO", "480k passings", 365667, 96791, 17155, 76.2, 20.2, 3.6, 23.8, 479613],
+  ["Frontier", "6.9M passings", 5297173, 1394346, 250310, 76.3, 20.1, 3.6, 23.7, 6941829],
+  ["Verizon", "9.5M passings", 7685157, 1804161, 18277, 80.8, 19.0, 0.2, 19.2, 9507595],
   ["Ziply Fiber", "789k passings", 662446, 95099, 31761, 83.9, 12.0, 4.0, 16.1, 789306],
-  ["altafiber", "721k passings", 651695, 68883, 115, 90.4, 9.6, 0.0, 9.6, 720693],
+  ["altafiber", "721k passings", 649570, 69382, 1741, 90.1, 9.6, 0.2, 9.9, 720693],
 ];
 const TOPS = {
-  "Google Fiber":[["AT&T", "1,053,852"], ["Everfast Fiber", "328,180"], ["Frontier", "35,654"]],
-  "Metronet":[["AT&T", "157,712"], ["Frontier", "19,211"], ["Windstream (Kinetic)", "10,657"]],
+  "Google Fiber":[["AT&T", "1,053,852"], ["Everfast Fiber", "328,180"], ["Metronet", "42,223"]],
   "Blue Stream Fiber":[["AT&T", "18,760"], ["Home Town Cable", "15,546"], ["Frontier", "12,188"]],
-  "Brightspeed":[["Lumos", "57,540"], ["Spectrum", "48,931"], ["AT&T", "46,243"]],
-  "Lumen (CenturyLink)":[["Hunter Communications", "7,534"], ["TDS Telecom", "5,880"], ["Intrepid Fiber", "4,284"]],
+  "Brightspeed":[["Metronet", "125,053"], ["Lumos", "57,540"], ["Spectrum", "48,931"]],
+  "Lumen (CenturyLink)":[["Hunter Communications", "7,534"], ["TDS Telecom", "5,880"], ["Metronet", "5,723"]],
+  "Metronet":[["AT&T", "637,183"], ["Frontier", "144,028"], ["Brightspeed", "125,053"]],
   "Hotwire":[["AT&T", "40,711"], ["Spectrum", "7,639"], ["Frontier", "4,402"]],
   "Consolidated (Fidium)":[["Ezee Fiber", "122,796"], ["GoNetspeed", "84,123"], ["AT&T", "50,938"]],
-  "Windstream (Kinetic)":[["ALLO", "37,175"], ["Ezee Fiber", "33,311"], ["Spectrum", "26,717"]],
+  "Windstream (Kinetic)":[["Metronet", "70,978"], ["ALLO", "37,175"], ["Ezee Fiber", "33,311"]],
+  "AT&T":[["Google Fiber", "1,053,852"], ["Metronet", "637,183"], ["Spectrum", "377,600"]],
   "ALLO":[["Windstream (Kinetic)", "37,175"], ["AT&T", "27,861"], ["Intrepid Fiber", "27,256"]],
-  "AT&T":[["Google Fiber", "1,053,852"], ["Spectrum", "377,600"], ["Sonic", "278,236"]],
-  "Frontier":[["GoNetspeed", "293,548"], ["Optimum (Altice)", "175,343"], ["Xfinity", "127,436"]],
+  "Frontier":[["GoNetspeed", "293,548"], ["Optimum (Altice)", "175,343"], ["Metronet", "144,028"]],
   "Verizon":[["Optimum (Altice)", "1,641,450"], ["Xfinity", "38,223"], ["Greenlight Networks", "28,547"]],
   "Ziply Fiber":[["TDS Telecom", "33,176"], ["Chelan County PUD", "23,204"], ["Native Network", "22,108"]],
   "altafiber":[["AT&T", "37,853"], ["Point Broadband", "9,280"], ["Spectrum", "8,390"]],
