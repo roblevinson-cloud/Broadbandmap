@@ -30,6 +30,7 @@
         "https://espanol.southwest.com/air/check-in",
         "https://investors.southwest.com/company-information",
         "https://investors.southwest.com/news-events/press-releases/detail/1926/southwest-airlines-ranked-first-by-jd-power-in-customer-satisfaction-among-economy-travelers-for-fifth-consecutive-year",
+        "https://link.metronet.com/fiberbenefits",
         "https://metroconet.com/",
         "https://metroconet.com/check-availability",
         "https://metroconet.com/city/carmel",
@@ -116,10 +117,12 @@
     "bing-lumos-web": {
       "kind": "feed",
       "seen": [
+        "http://mail.lumos.net/",
         "http://speedtest.lumos.net/",
         "http://webmail.lumos.net/",
         "https://aixzd.com/robot/lumos",
         "https://auctions.godaddy.com/beta",
+        "https://careers.lumosfiber.com/",
         "https://developer.godaddy.com/en",
         "https://en.m.wikipedia.org/wiki/Lumos_Networks",
         "https://en.wikipedia.org/wiki/Lumos_(charity)",
